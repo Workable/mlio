@@ -106,7 +106,7 @@ class GeneralMLTestCase(unittest.TestCase):
         self.assertTrue(np.all(self.np_array == recovered_np_array))
 
         self.assertEqual(len(ser.get_context_dependencies()), 1)
-        self.assertEqual(ser.get_context_dependencies()[0].dependency_id(), "numpy-==1.12.1")
+        self.assertEqual(ser.get_context_dependencies()[0].dependency_id(), "module-version:numpy-~=1.12.1")
 
     def test_dump_load_string(self):
         ser = GenericMLModelsSerializer()
@@ -115,7 +115,7 @@ class GeneralMLTestCase(unittest.TestCase):
         self.assertTrue(np.all(self.np_array == recovered_np_array))
 
         self.assertEqual(len(ser.get_context_dependencies()), 1)
-        self.assertEqual(ser.get_context_dependencies()[0].dependency_id(), "numpy-==1.12.1")
+        self.assertEqual(ser.get_context_dependencies()[0].dependency_id(), "module-version:numpy-~=1.12.1")
 
 
 class GensimWord2VecTestCase(unittest.TestCase):
@@ -156,7 +156,7 @@ class GensimWord2VecTestCase(unittest.TestCase):
         self.assertTrue((self.wv_model.wv['one'] == recovered_wv_model.wv['one']).all())
 
         self.assertEqual(len(ser.get_context_dependencies()), 1)
-        self.assertEqual(ser.get_context_dependencies()[0].dependency_id(), "gensim-==2.1.0")
+        self.assertEqual(ser.get_context_dependencies()[0].dependency_id(), "module-version:gensim-~=2.1.0")
 
     def test_dump_load_string(self):
         ser = GensimWord2VecModelsSerializer()
@@ -165,7 +165,7 @@ class GensimWord2VecTestCase(unittest.TestCase):
         self.assertTrue((self.wv_model.wv['one'] == recovered_wv_model.wv['one']).all())
 
         self.assertEqual(len(ser.get_context_dependencies()), 1)
-        self.assertEqual(ser.get_context_dependencies()[0].dependency_id(), "gensim-==2.1.0")
+        self.assertEqual(ser.get_context_dependencies()[0].dependency_id(), "module-version:gensim-~=2.1.0")
 
 if __name__ == '__main__':
     unittest.main()

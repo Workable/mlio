@@ -1,4 +1,7 @@
 import importlib
+from datetime import datetime
+
+from .serializers import get_serializer_by_id
 
 
 class MLIOError(IOError):
@@ -19,20 +22,6 @@ class ModelVersionError(MLIOError):
     Exception to be raised in case of model version error
     """
     pass
-
-
-def get_installed_modules_version(modules):
-    """
-    Get the versions of the installed modules
-    :param list[str] modules: A list of the modules to find their versions.
-    :return: A dictionary with each watched module and its version
-    :rtype: dict[str, str]
-    """
-    module_versions = {}
-    for module_name in modules:
-        module = importlib.import_module(module_name)
-        module_versions[module_name] = module.__version__
-    return module_versions
 
 
 def assert_versions_match(expected, actual):
@@ -64,7 +53,3 @@ def assert_versions_match(expected, actual):
                 ))
 
 
-class PackManifest(object):
-
-    def __init__(self, ):
-        pass

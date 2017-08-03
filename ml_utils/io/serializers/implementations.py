@@ -8,14 +8,14 @@ import joblib
 from ..context_dependencies import ModuleVersionContextDependency, get_installed_module_version
 
 
-def get_object_root_module(object):
+def get_object_root_module(obj):
     """
-    Get the object module version
-    :param T object: Any object
+    Get the obj module version
+    :param T obj: Any object
     :rtype: str
     :return The root module of the object's type
     """
-    return type(object).__module__.split('.')[0]
+    return type(obj).__module__.split('.')[0]
 
 
 class SerializerBase(object):
@@ -70,7 +70,6 @@ class SerializerBase(object):
             ModuleVersionContextDependency(module_name, version_spec)
         )
 
-
     @classmethod
     def serializer_id(cls):
         """
@@ -80,10 +79,10 @@ class SerializerBase(object):
         raise NotImplementedError()
 
     @classmethod
-    def can_process(cls, object):
+    def can_process(cls, obj):
         """
         Check if this serializer can serialize a specific type of object
-        :param T object: The object to be serialized
+        :param T obj: The object to be serialized
         :rtype: True
         """
         raise NotImplementedError()
@@ -97,10 +96,10 @@ class SerializerBase(object):
         """
         raise NotImplementedError()
 
-    def dump(self, object, fh):
+    def dump(self, obj, fh):
         """
         Save an object to a serialized format in the filesystem
-        :param T object: The object to save on the filesystem.
+        :param T obj: The object to save on the filesystem.
         :param typing.IO fh: File-like object
         """
         raise NotImplementedError()
@@ -114,10 +113,10 @@ class SerializerBase(object):
         """
         raise NotImplementedError()
 
-    def dumps(self, object):
+    def dumps(self, obj):
         """
         Same as dump() but it will return the serialized format in a string
-        :param T object: The object to serialize
+        :param T obj: The object to serialize
         :return: The serialized payload
         :rtype: str
         """
@@ -129,9 +128,9 @@ class EmulateStringOperationsMixIn(object):
     MixIn for serializers to add (emulated) support for load and dump on strings
     """
 
-    def dumps(self, object):
+    def dumps(self, obj):
         with TemporaryFile("w+b") as f:
-            self.dump(object, f)
+            self.dump(obj, f)
             f.seek(0, sys_io.SEEK_SET)
             return f.read()
 
@@ -151,8 +150,8 @@ class DefaultSerializer(EmulateStringOperationsMixIn, SerializerBase):
     def serializer_id(cls):
         return 'default'
 
-    def dump(self, object, fh):
-        pickle.dump(object, fh)
+    def dump(self, obj, fh):
+        pickle.dump(obj, fh)
 
     def load(self, fh):
         return pickle.load(fh)
@@ -164,7 +163,7 @@ class DefaultSerializer(EmulateStringOperationsMixIn, SerializerBase):
             return self.load(f)
 
     @classmethod
-    def can_process(cls, object):
+    def can_process(cls, obj):
         return True
 
 
@@ -178,18 +177,18 @@ class GenericMLModelsSerializer(EmulateStringOperationsMixIn, SerializerBase):
     def serializer_id(cls):
         return 'generic-ml-models'
 
-    def dump(self, object, fh):
+    def dump(self, obj, fh):
         self._add_module_version_dependency(
-            get_object_root_module(object)
+            get_object_root_module(obj)
         )
-        return joblib.dump(object, fh)
+        return joblib.dump(obj, fh)
 
     def load(self, fh):
         return joblib.load(fh)
 
     @classmethod
-    def can_process(cls, object):
-        return get_object_root_module(object) in {'sklearn', 'numpy', 'xgboost'}
+    def can_process(cls, obj):
+        return get_object_root_module(obj) in {'sklearn', 'numpy', 'xgboost'}
 
 
 class GensimWord2VecModelsSerializer(SerializerBase):
@@ -209,53 +208,50 @@ class GensimWord2VecModelsSerializer(SerializerBase):
             None
         )
 
-    def dump(self, object, fh):
+    def dump(self, obj, fh):
         self._add_gensim_module_version_dependency()
-        return object.save(fh)
+        return obj.save(fh)
 
     def load(self, fh):
         from gensim.models import Word2Vec
 
-        with NamedTemporaryFile('w') as temp_fname:
+        with NamedTemporaryFile('w+b') as temp_fh:
+            shutil.copyfileobj(fh, temp_fh)
+            temp_fh.flush()
+            return Word2Vec.load(temp_fh.name)
 
-            with open(temp_fname.name, 'w+b') as temp_fh:
-                shutil.copyfileobj(fh, temp_fh)
-            return Word2Vec.load(temp_fname.name)
-
-    def dumps(self, object):
+    def dumps(self, obj):
         self._add_gensim_module_version_dependency()
 
         # Create a temporary file and ask Word2Vec to write on this file
-        with NamedTemporaryFile("w+b") as temp:
-            object.save(temp.name)
-            # Open file and read contents
-            with open(temp.name, 'r+b') as temp_fh:
-                return temp_fh.read()
+        with NamedTemporaryFile("r+b") as temp_fh:
+            obj.save(temp_fh.name)
+            # Read contents
+            return temp_fh.read()
 
     def loads(self, payload):
         from gensim.models import Word2Vec
 
         # Create temporary file and dump payload
-        with NamedTemporaryFile("r+b") as temp:
-            with open(temp.name, 'r+b') as temp_fh:
-                temp_fh.write(payload)
-
+        with NamedTemporaryFile("r+b") as temp_fh:
+            temp_fh.write(payload)
+            temp_fh.flush()
             # Ask gensim to load model from file-system
-            return Word2Vec.load(temp.name)
+            return Word2Vec.load(temp_fh.name)
         
     @classmethod
-    def _is_gensim_word2vec(cls, object):
+    def _is_gensim_word2vec(cls, obj):
         """
         Check if it is a Word2Vec gensim model
-        :param Word2Vec|T object: Any type of object
+        :param Word2Vec|T obj: Any type of object
         :rtype: bool
         """
         from gensim.models import Word2Vec
-        return isinstance(object, Word2Vec)
+        return isinstance(obj, Word2Vec)
 
     @classmethod
-    def can_process(cls, object):
+    def can_process(cls, obj):
         # By first check the root module before import Word2Vec type. This permits to use this function
         # in python environment without gensim installed
-        return get_object_root_module(object) in {'gensim'} \
-               and cls._is_gensim_word2vec(object)
+        return get_object_root_module(obj) in {'gensim'} \
+               and cls._is_gensim_word2vec(obj)

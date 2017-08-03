@@ -7,7 +7,7 @@ from ml_utils.io import load, dump, remove_slot, SlotKeyError
 from .generic import GenericObject
 
 
-class SingleFileAccessTestCase(unittest.TestCase):
+class CompatibilityApiTestCase(unittest.TestCase):
 
     def setUp(self):
         self.obj2k = GenericObject(2000)
@@ -57,6 +57,7 @@ class SingleFileAccessTestCase(unittest.TestCase):
                 dump(self.obj2k, tf, slot='same-slot')
 
             remove_slot(tf, 'same-slot')
+            dump(self.obj2k, tf, slot='same-slot')
 
             tf.seek(0, sys_io.SEEK_SET)
 
@@ -64,6 +65,8 @@ class SingleFileAccessTestCase(unittest.TestCase):
 
         self.assertDictEqual(self.obj2k.data, recovered_obj2k.data)
         self.assertIsNot(self.obj2k, recovered_obj2k)
+
+
 
 if __name__ == '__main__':
     unittest.main()
