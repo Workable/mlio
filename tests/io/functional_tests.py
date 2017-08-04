@@ -1,9 +1,7 @@
 import unittest
 import tempfile
-import io as sys_io
 
 from ml_utils.io import load, dump, SlotKeyError, Pack
-
 
 from .generic import GenericObject
 
@@ -25,6 +23,7 @@ class ObjectFixturesMixIn(object):
         self.assertDictEqual(self.obj2k.data, recovered_obj.data)
         self.assertIsNot(self.obj2k, recovered_obj)
 
+
 class CompatibilityApiTestCase(ObjectFixturesMixIn, unittest.TestCase):
 
     def test_simple_dump_load(self):
@@ -42,7 +41,6 @@ class CompatibilityApiTestCase(ObjectFixturesMixIn, unittest.TestCase):
         with tempfile.TemporaryFile("w+b") as tf:
             dump(self.obj1k, tf, slot_key='1k')
             dump(self.obj2k, tf, slot_key='2k')
-
 
             recovered_obj1k = load(tf, slot_key='1k')
             recovered_obj2k = load(tf, slot_key='2k')
@@ -128,6 +126,7 @@ class PackApiTestCase(ObjectFixturesMixIn, unittest.TestCase):
 
                 recovered_obj2k = pck.load_slot('same-slot')
                 self.assertEqualObj2k(recovered_obj2k)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,7 +1,7 @@
 import unittest
 import tempfile
 import io as sys_io
-import packaging
+import packaging.version
 import mock
 
 from sklearn.linear_model import LinearRegression
@@ -14,7 +14,6 @@ import numpy as np
 from ml_utils.io.serializers.gensim import GensimWord2VecModelsSerializer
 from tests.io.generic import GenericObject
 from tests.io.serializers.data import RING_VERSE
-
 
 
 class GensimWord2VecTestCase(unittest.TestCase):
@@ -70,6 +69,7 @@ class GensimWord2VecTestCase(unittest.TestCase):
 
         self.assertEqual(len(ser.get_context_dependencies()), 1)
         self.assertEqual(ser.get_context_dependencies()[0].dependency_id(), "module-version:gensim-~=0.14.1")
+
 
 if __name__ == '__main__':
     unittest.main()

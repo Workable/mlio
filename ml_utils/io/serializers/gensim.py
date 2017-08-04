@@ -64,7 +64,7 @@ class GensimWord2VecModelsSerializer(SerializerBase):
 
     @classmethod
     def can_serialize(cls, obj):
-        # By first check the root module before import Word2Vec type. This permits to use this function
+        # First check the root module before import Word2Vec type. This permits to use this function
         # in python environment without gensim installed
         return get_object_root_module(obj) in {'gensim'} \
                and cls._is_gensim_word2vec(obj)

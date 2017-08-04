@@ -6,7 +6,6 @@ import packaging
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-from gensim.models import Word2Vec
 import numpy as np
 import mock
 
@@ -59,6 +58,7 @@ class DefaultSerializerTestCase(unittest.TestCase):
 
         self.assertEqual(len(ser.get_context_dependencies()), 0)
 
+
 class GeneralMLTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -109,6 +109,7 @@ class GeneralMLTestCase(unittest.TestCase):
 
         self.assertEqual(len(ser.get_context_dependencies()), 1)
         self.assertEqual(ser.get_context_dependencies()[0].dependency_id(), "module-version:numpy-~=0.12.1")
+
 
 if __name__ == '__main__':
     unittest.main()

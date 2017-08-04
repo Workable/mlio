@@ -3,19 +3,7 @@ import tempfile
 from zipfile import ZipFile
 from datetime import datetime
 
-
-class SlotKeyError(KeyError):
-    """
-    Exception raised on case of key error
-    """
-    pass
-
-
-class MLIOPackWrongFormat(ValueError):
-    """
-    Exception to be raised in case of pack parsing error
-    """
-    pass
+from .exc import MLIOPackWrongFormat, SlotKeyError
 
 
 class PackManifestSlot(object):
@@ -23,7 +11,7 @@ class PackManifestSlot(object):
     def __init__(self, slot_key, sha256_hash, serializer, dependencies=None):
         """
 
-        :param str slot_key: The identifier of the slot  
+        :param str slot_key: The identifier of the slot
         :param str sha256_hash:
         :param ml_utils.io.serializers.implementations.SerializerBase serializer:
         :param list[ml_utils.io.context_dependencies.ContextDependencyBase] dependencies:
@@ -35,7 +23,6 @@ class PackManifestSlot(object):
         self.serializer = serializer
         self.dependencies = dependencies
         self.sha256_hash = sha256_hash
-
 
     def pack_filename(self):
         """
@@ -181,7 +168,7 @@ class PackManifest(object):
         self._updated_at = datetime.utcnow()
 
     @classmethod
-    def _dependencies_from_dict(cls, dependencies_dict ):
+    def _dependencies_from_dict(cls, dependencies_dict):
         """
         Load dependencies from dict data and return objects
         :param dict[str, str] data:
@@ -285,6 +272,7 @@ class PackManifest(object):
                 for slot in self._slots.values()
             ]
         }
+
 
 class Pack(object):
     """

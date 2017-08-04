@@ -1,9 +1,10 @@
-from .pack import Pack, SlotKeyError
+from .pack import Pack
 from .compat import load, dump
+from . import exc
 
 __all__ = [
     "Pack",
-    "SlotKeyError",
     "load",
-    "dump"
+    "dump",
+    "exc"
 ]

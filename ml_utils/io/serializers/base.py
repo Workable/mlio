@@ -1,7 +1,7 @@
 import io as sys_io
 from tempfile import TemporaryFile
 
-from ..context_dependencies import ModuleVersionContextDependency, get_installed_module_version
+from ..context_dependencies.module_version import ModuleVersionContextDependency, get_installed_module_version
 
 
 def get_object_root_module(obj):
