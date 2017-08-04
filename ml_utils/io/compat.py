@@ -13,7 +13,9 @@ def dump(model, fp, slot_key=None):
         slot_key = "_default"
 
     with Pack(fp) as mlio_pack:
-        mlio_pack.dump_to_slot(slot_key, model)
+        if mlio_pack.has_slot(slot_key):
+            mlio_pack.remove_slot(slot_key)
+        mlio_pack.dump_slot(slot_key, model)
 
 
 def load(fp, slot_key=None):
@@ -28,4 +30,4 @@ def load(fp, slot_key=None):
         slot_key = "default"
 
     with Pack(fp) as mlio_pack:
-        return mlio_pack.load_from_slot(slot_key)
+        return mlio_pack.load_slot(slot_key)

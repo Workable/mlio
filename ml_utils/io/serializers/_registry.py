@@ -26,23 +26,23 @@ def find_suitable_serializer(obj):
     """
 
     for serializer in __serializers_registry.values():
-        if serializer.can_process(obj):
+        if serializer.can_serialize(obj):
             return serializer
 
     raise UnknownObjectType("Cannot find a suitalble serializer for object of type {}".format(type(object)))
 
 
-def get_serializer_by_id(serializer_id):
+def get_serializer_by_type(serializer_type):
     """
-    Find a serialized based on its id
-    :rtype: str serializer_id: The id of the serializer as it was provided by Serializer.serializer_id()
+    Find a serialized based on its type
+    :rtype: str serializer_type: The unique type of the serializer as it was provided by Serializer.serializer_type()
     :return: The serializer
     :rtype: ml_utils.io.serializers.implementations.SerializerBase
     """
-    if serializer_id in __serializers_registry:
-        return __serializers_registry[serializer_id]
+    if serializer_type in __serializers_registry:
+        return __serializers_registry[serializer_type]
 
-    raise UnknownSerializer("Unknown serializer with id: {}".format(serializer_id))
+    raise UnknownSerializer("Unknown serializer with id: {}".format(serializer_type))
 
 
 def register_serializer(serializer):
@@ -53,5 +53,7 @@ def register_serializer(serializer):
     """
 
     global __serializers_registry
-    __serializers_registry[serializer.serializer_id()] = serializer
+    __serializers_registry[serializer.serializer_type()] = serializer
+    __serializers_registry.move_to_end(serializer.serializer_type(), last=False)
+
     return serializer

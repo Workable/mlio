@@ -3,6 +3,8 @@ import packaging.specifiers
 import importlib
 import copy
 
+from ._registry import register_dependency_type, get_dependency_by_type, UnknownContextDependencyType
+
 
 def get_installed_module_version(module_name):
     """
@@ -84,7 +86,7 @@ class ContextDependencyBase(object):
         Reconstruct object from a dictionary representation object
         :param dict data: The data as were encoded by to_dict
         :return: A newly constructed object that has these parameters
-        :rtype: cls
+        :rtype: ContextDependencyBase
         """
         if data.get('type', None) != cls.dependency_type():
             raise ValueError("The provided data where not of the same dependency type.")
@@ -94,6 +96,7 @@ class ContextDependencyBase(object):
         return dependency
 
 
+@register_dependency_type
 class ModuleVersionContextDependency(ContextDependencyBase):
 
     def __init__(self, module_name, accepted_versions):
