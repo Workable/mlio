@@ -1,5 +1,7 @@
 import json
 import tempfile
+import sys
+import io as sys_io
 from zipfile import ZipFile
 from datetime import datetime
 
@@ -7,46 +9,64 @@ from .exc import MLIOPackWrongFormat, SlotKeyError
 
 
 class PackManifestSlot(object):
+    """
+    Representation model for a slot of the pack's manifest
+    """
 
-    def __init__(self, slot_key, sha256_hash, serializer, dependencies=None):
+    def __init__(self, slot_key, serializer, serialized_sha256_hash, dependencies=None):
         """
+        Initialize a new slot
+        :param str slot_key: The unique identifier of the slot in the pack
+        :param ml_utils.io.serializers.implementations.SerializerBase serializer: The serializer object that can
+        be used to unserialize slot
+        :param str serialized_sha256_hash: The hash of the serialized data
+        :param typing.Iterable[ml_utils.io.context_dependencies.base.ContextDependencyBase] dependencies: A list of
+        all context dependencies that this slot requires in order to un-serialize
+        """
+        from .context_dependencies.base import ContextDependencyBase
 
-        :param str slot_key: The identifier of the slot
-        :param str sha256_hash:
-        :param ml_utils.io.serializers.implementations.SerializerBase serializer:
-        :param list[ml_utils.io.context_dependencies.ContextDependencyBase] dependencies:
-        """
         if dependencies is None:
             dependencies = []
 
-        self.slot_key = slot_key,
+        for dep in dependencies:
+            if not isinstance(dep, ContextDependencyBase):
+                raise TypeError("Dependencies must be given in object instance of ContextDependecy. Instead {!r} was "
+                                "given".format(dep))
+        self.slot_key = slot_key
         self.serializer = serializer
-        self.dependencies = dependencies
-        self.sha256_hash = sha256_hash
+        self._dependencies = {
+            dep.dependency_id(): dep
+            for dep in dependencies
+        }
+        self.serialized_sha256_hash = serialized_sha256_hash
 
+    @property
+    def dependencies(self):
+        """:rtype: dict[str, ml_utils.io.context_dependencies.base.ContextDependencyBase]"""
+        return self._dependencies
+
+    @property
     def pack_filename(self):
         """
         The internal filename of the pack
         :rtype: str
         """
-        return "{}.slot".format(self.sha256_hash)
+        return "{}.slot".format(self.serialized_sha256_hash)
 
     @classmethod
     def from_dict(cls, slot_key, data, manifest_dependencies):
         """
         Recover an instance from dictionary format
         :param str slot_key: The key of this slot
-        :param dict data:
-        :param dict[str, ml_utils.io.context_dependencies.ContextDependencyBase] manifest_dependencies: All the
+        :param dict data: Dictionary with all metadata of the manifest slot
+        :param dict[str, ml_utils.io.context_dependencies.base.ContextDependencyBase] manifest_dependencies: All the
         dependencies declared in the PackManifest mapped by their id
         :rtype: PackManifestSlot
         """
         from .serializers import get_serializer_by_type
 
-        slot_key = data['slot_key']
-
         # Check mandatory fields
-        if 'sha256' not in data:
+        if 'serialized_sha256_hash' not in data:
             raise MLIOPackWrongFormat(
                 "Cannot load slot: {} because it is missing hash field".format(slot_key))
         if 'serializer' not in data:
@@ -63,10 +83,10 @@ class PackManifestSlot(object):
             ))
 
         # Load slot
-        cls(
+        return cls(
             slot_key=slot_key,
-            sha256_hash=data['sha256'],
-            serializer=get_serializer_by_type(data['serializer']),
+            serialized_sha256_hash=data['serialized_sha256_hash'],
+            serializer=get_serializer_by_type(data['serializer'])(),
             dependencies=[
                 manifest_dependencies[dep_id]
                 for dep_id in dependencies_ids
@@ -78,35 +98,31 @@ class PackManifestSlot(object):
         :rtype: dict
         """
         return {
-            'slot': self.slot_key,
-            'sha256': self.sha256_hash,
+            'serialized_sha256_hash': self.serialized_sha256_hash,
             'serializer': self.serializer.serializer_type(),
-            'dependencies': list(set(
-                dep.dependency_id()
-                for dep in self.dependencies
-            )),
+            'dependencies': list(self.dependencies.keys())
         }
 
 
 class PackManifest(object):
     """
-    Handler for Manifest registry of the pack
+    Representation model for Manifest registry of the pack
     """
 
     PROTOCOL_VERSION = 2
-    MANIFEST_FILENAME = "Manifest.json"
+    MANIFEST_FILENAME = "manifest.json"
 
-    def __init__(self, meta_data=None, dependencies=None, slots=None, created_at=None, updated_at=None):
+    def __init__(self, dependencies=None, slots=None, created_at=None, updated_at=None):
         """
-        Construct a new manifest object
-        :param dict[str,str]|None meta_data:
-        :param list[ml_utils.io.context_dependencies.ContextDependencyBase]|None dependencies:
-        :param list[PackManifestSlot]|None slots:
-        :param datetime|None created_at:
-        :param datetime|None updated_at:
+        Initialize a new manifest instance
+        :param typing.Iterable[ml_utils.io.context_dependencies.base.ContextDependencyBase]|None dependencies: The list
+        with dependencies that this slot holds
+        :param typing.Iterable[PackManifestSlot]|None slots: The list with slots that this pack holds
+        :param datetime|None created_at: The datetime this pack was created. If None it will be set to
+        current time
+        :param datetime|None updated_at: The datetime this pack was updated. If None it will be set to
+        current time
         """
-        if meta_data is None:
-            meta_data = {}
 
         if created_at is None:
             created_at = datetime.utcnow()
@@ -114,34 +130,25 @@ class PackManifest(object):
             updated_at = datetime.utcnow()
 
         if dependencies is None:
-            dependencies = {}
-        else:
-            dependencies = {
+            dependencies = []
+
+        if slots is None:
+            slots = []
+
+        self._created_at = created_at
+        self._updated_at = updated_at
+        self._dependencies = {
                 dep.dependency_id(): dep
                 for dep in dependencies
             }
-
-        if slots is None:
-            slots = {}
-        else:
-            slots = {
+        self._slots = {
                 slot.slot_key: slot
                 for slot in slots
             }
 
-        self._meta_data = meta_data
-        self._created_at = created_at
-        self._updated_at = updated_at
-        self._dependencies = dependencies
-        self._slots = slots
-
-    @property
-    def meta_data(self):
-        return self._meta_data
-
     @property
     def dependencies(self):
-        """:rtype: dict[str, ml_utils.io.context_dependencies.ContextDependencyBase] """
+        """:rtype: dict[str, ml_utils.io.context_dependencies.base.ContextDependencyBase] """
         return self._dependencies
 
     @property
@@ -156,16 +163,64 @@ class PackManifest(object):
 
     @property
     def slots(self):
-        """
-        :rtype: dict[str, PackManifestSlot]
-        """
+        """ :rtype: dict[str, PackManifestSlot] """
         return self._slots
+
+    def insert_slot(self, slot):
+        """
+        Insert a new slot in the manifest. This function will also update Manifest's dependencies registry.
+
+        :param PackManifestSlot slot: The slot object to be inserted
+        """
+        if slot.slot_key in self.slots:
+            raise SlotKeyError("Slot already exists with the same key: {}".format(slot.slot_key))
+
+        # Extend dependencies
+        for dep_id, dep in slot.dependencies.items():
+            if dep_id not in self.dependencies:
+                self._dependencies[dep_id] = dep
+
+        self._slots[slot.slot_key] = slot
+
+    def remove_slot(self, slot_key):
+        """
+        Remove a slot from manifest file. It will also clean-up dangling dependencies that are not referenced by
+        any other slot
+        :param str slot_key: The key of the slot to be removed
+        """
+        if slot_key not in self.slots:
+            raise SlotKeyError("Cannot remove non-existing slot {}.".format(slot_key))
+
+        # Remove slot
+        del self.slots[slot_key]
+
+        # Remove dangling dependencies
+        self._cleanup_dangling_dependencies()
 
     def touch_updated_at(self):
         """
         Touch updated at timestamp with current timestamp
         """
         self._updated_at = datetime.utcnow()
+
+    def _cleanup_dangling_dependencies(self):
+        """
+        Find dependencies that are note referenced by any slot and remove them
+        """
+        import itertools
+
+        # Find all referenced dependency ids
+        referenced_dep_ids = set(itertools.chain(*[
+            slot.dependencies.keys()
+            for slot in self.slots.values()
+        ]))
+
+        # Calculate the dangling by subtracting referenced
+        dangling_dep_ids = set(self.dependencies.keys()) - referenced_dep_ids
+
+        # Remove dangling
+        for dep_id in dangling_dep_ids:
+            del self.dependencies[dep_id]
 
     @classmethod
     def _dependencies_from_dict(cls, dependencies_dict):
@@ -180,7 +235,7 @@ class PackManifest(object):
         if not isinstance(dependencies_dict, dict):
             raise MLIOPackWrongFormat("Manifest file is mal-formatted and cannot load dependencies.")
 
-        dependencies = []
+        dependencies = {}
         for dep_id, dep_data in dependencies_dict.items():
             dep_type = dep_data.get('type')
             try:
@@ -190,8 +245,9 @@ class PackManifest(object):
 
             try:
                 dep_obj = dep_class.from_dict(dep_data)
-            except:
-                raise MLIOPackWrongFormat("Cannot load dependency with id: {}".format(dep_id))
+            except Exception as e:
+                raise MLIOPackWrongFormat("Cannot load dependency with id: {} because {}"
+                                          .format(dep_id, e))
 
             if dep_obj.dependency_id() != dep_id:
                 raise MLIOPackWrongFormat("Dependency with id: {} seems to have wrong id! Expecting: {}".format(
@@ -205,7 +261,7 @@ class PackManifest(object):
     def _slots_from_dict(cls, slots_dict, manifest_dependencies):
         """
         Load slots from dict data and return objects
-        :param dict[str, str] slots_dict: The slots dictionary
+        :param dict[str, dict] slots_dict: Description dictionary mapped per slot key
         :param  dict[str, ml_utils.io.context_dependencies.ContextDependencyBase] manifest_dependencies: The manifest
         dependencies
         :rtype: list[PackManifestSlot]
@@ -215,14 +271,14 @@ class PackManifest(object):
         if not isinstance(slots_dict, dict):
             raise MLIOPackWrongFormat("Manifest file is mal-formatted and cannot be load slots.")
 
-        return {
-            slot_key: PackManifestSlot.from_dict(
+        return [
+            PackManifestSlot.from_dict(
                 slot_key=slot_key,
                 data=slot_data,
                 manifest_dependencies=manifest_dependencies
             )
-            for slot_key, slot_data in slots_dict
-        }
+            for slot_key, slot_data in slots_dict.items()
+        ]
 
     @classmethod
     def from_dict(cls, data):
@@ -231,17 +287,31 @@ class PackManifest(object):
         :rtype: PackManifest
         """
 
+        # Check version
+        if data.get('version', None) != 2:
+            raise MLIOPackWrongFormat("An incompatible pack version was provided")
+
         # Recover dependencies
         dependencies = cls._dependencies_from_dict(data.get('dependencies', {}))
 
         # Recover slots
         slots = cls._slots_from_dict(data.get('slots', {}), dependencies)
 
+        # Recover meta-data
+        created_at = data.get('meta', {}).get('created_at', None)
+        if created_at is not None:
+            created_at = datetime.fromtimestamp(created_at)
+
+        updated_at = data.get('meta', {}).get('updated_at', None)
+        if updated_at is not None:
+            updated_at = datetime.fromtimestamp(updated_at)
+
         # Extract timestamp from metadata
         return PackManifest(
-            meta_data=data.get('meta_data', {}).get('user'),
             dependencies=list(dependencies.values()),
-            slots=slots
+            slots=slots,
+            created_at=created_at,
+            updated_at=updated_at
         )
 
     def _metadata_to_dict(self):
@@ -249,10 +319,10 @@ class PackManifest(object):
         Convert meta data storage to dictionary object
         :rtype: dict
         """
-        from copy import deepcopy
-        meta = deepcopy(self._meta_data)
+        meta = {}
         meta['created_at'] = self.created_at.timestamp()
         meta['updated_at'] = self.updated_at.timestamp()
+        meta['python'] = sys.version
         return meta
 
     def to_dict(self):
@@ -267,10 +337,10 @@ class PackManifest(object):
                 dep.dependency_id(): dep.to_dict()
                 for dep in self.dependencies.values()
             },
-            'slots': [
-                slot.to_dict()
+            'slots': {
+                slot.slot_key: slot.to_dict()
                 for slot in self._slots.values()
-            ]
+            }
         }
 
 
@@ -278,7 +348,11 @@ class Pack(object):
     """
     MLIO pack that is capable to dump and load ML related objects in unique slots
 
-    The object can be used as a context manager also
+    The object can also be used as a context manager as:
+
+    with open('pack.zip', 'w+b') as fp
+        with Pack(fp) as pck:
+            print(pck.list_slots())
     """
 
     def __init__(self, file_handler):
@@ -286,7 +360,7 @@ class Pack(object):
         self._zip_fh = ZipFile(self._file_handler, 'a')
         self._manifest = self._load_or_create_manifest()
 
-    def _load_or_create_manifest(self, timestamp):
+    def _load_or_create_manifest(self):
         """
         :rtype: PackManifest
         """
@@ -306,6 +380,7 @@ class Pack(object):
         """
         if manifest is None:
             manifest = self._manifest
+        print(manifest.to_dict())
         manifest_json = json.dumps(manifest.to_dict())
         self._zip_fh.writestr(PackManifest.MANIFEST_FILENAME, manifest_json)
 
@@ -325,16 +400,29 @@ class Pack(object):
         """
         self._zip_fh.close()
 
-    def list_slots(self):
-        return self._manifest.slots.values()
+    @property
+    def slots_info(self):
+        """
+        Get information about slots
+        :rtype: dict[str, PackManifestSlot]
+        """
+        return self._manifest.slots
 
-    def metadata(self):
-        return self._manifest.meta_data
-
-    def update_metadata(self, key, value):
-        return self._manifest.meta_data
+    def has_slot(self, slot_key):
+        """
+        Check if a slot exists in the pack
+        :param str slot_key:
+        :rtype: bool
+        """
+        return slot_key in self._manifest.slots
 
     def dump_slot(self, slot_key, obj):
+        """
+        Dump an object in a pack slot
+        :param str slot_key:
+        :param obj:
+        :return:
+        """
         from .serializers import find_suitable_serializer
         from ._lib import hash_file_object
 
@@ -342,34 +430,35 @@ class Pack(object):
             raise SlotKeyError("Cannot overwrite slot with id: {}".format(slot_key))
 
         # Find suitable serializer
-        serializer = find_suitable_serializer(obj)
+        serializer = find_suitable_serializer(obj)()
 
-        with tempfile.NamedTemporaryFile('r+b') as temp_fh:
+        with tempfile.NamedTemporaryFile('w+b') as temp_fh:
 
             # Serialize
-            serializer.dump(temp_fh, obj)
-            sha256_hash = hash_file_object(temp_fh)
+            serializer.dump(obj, temp_fh)
 
             # Calculate sha256
+            temp_fh.seek(0, sys_io.SEEK_SET)
+            sha256_hash = 1  # hash_file_object(temp_fh)
+
+            # Calculate slot metadata
             slot = PackManifestSlot(
                 slot_key=slot_key,
                 sha256_hash=sha256_hash,
-                serializer=serializer.serializer_type(),
+                serializer=serializer,
                 dependencies=serializer.get_context_dependencies()
             )
 
-            # Calculate sha256 hash
+            # Write slot in the pack
+            temp_fh.seek(0, sys_io.SEEK_SET)
             self._zip_fh.write(temp_fh.name, arcname=slot.pack_filename())
 
-        # Inject dependencies on metadata
-
-        raise NotImplementedError()
+            # Update manifest
+            self._manifest.insert_slot(slot)
+            self._update_manifest()
 
     def load_slot(self, slot_key):
         raise NotImplementedError()
 
     def remove_slot(self, slot_key):
         raise NotImplementedError()
-
-    def has_slot(self, slot_key):
-        return slot_key in self._manifest.slots
