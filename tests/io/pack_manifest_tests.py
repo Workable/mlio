@@ -4,12 +4,13 @@ import os
 import json
 from datetime import datetime
 
-
 from ml_utils.io.exc import MLIOPackWrongFormat, SlotKeyError
 from ml_utils.io.pack import PackManifestSlot, PackManifest
 from ml_utils.io.serializers.generic import GenericMLModelsSerializer
 from ml_utils.io.serializers.gensim import GensimWord2VecModelsSerializer
 from ml_utils.io.context_dependencies.module_version import ModuleVersionContextDependency
+
+from tests import fixtures
 
 
 class PackManifestSlotTestCase(unittest.TestCase):
@@ -26,8 +27,7 @@ class PackManifestSlotTestCase(unittest.TestCase):
         slot = PackManifestSlot(
             slot_key='key',
             serializer=ser,
-            serialized_sha256_hash='ahash',
-
+            serialized_sha256_hash='ahash'
         )
         self.assertEqual(slot.slot_key, 'key')
         self.assertIs(slot.serializer, ser)
@@ -168,8 +168,7 @@ class PackManifestTestCase(unittest.TestCase):
             for slot in self.slots
         }
 
-        manifest_filepath = os.path.join(os.path.dirname(__name__), '..', 'fixtures', 'manifest.json')
-        with open(manifest_filepath, 'r') as f:
+        with open(fixtures.file_path('manifest.json'), 'r') as f:
             self.manifest_dict = json.load(f)
 
     @mock.patch('ml_utils.io.pack.datetime')
