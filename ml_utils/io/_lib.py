@@ -4,7 +4,7 @@ import hashlib
 def file_as_blockiter(file, block_size=65536):
     """
     Treat a file handler as block generator of bytes
-    :param typing.IO file: The file object
+    :param typing.FileIO[bytes] file: The file object
     :param int block_size: The size of each block
     :return:
     """
@@ -18,8 +18,8 @@ def file_as_blockiter(file, block_size=65536):
 def hash_file_object(file, hasher=hashlib.sha256):
     """
     Calculate SHA256 hash for a file object
-    :param typing.IO file: The file object to read date from
-    :param T hasher: The hasher constructor
+    :param typing.FileIO[bytes] file: The file object to read date from
+    :param typing.Callable hasher: Factory function for the hasher object
     :rtype: str
     """
     h = hasher()
