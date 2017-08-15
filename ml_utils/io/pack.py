@@ -2,10 +2,11 @@ import json
 import tempfile
 import sys
 import io as sys_io
+import warnings
 from zipfile import ZipFile
 from datetime import datetime
 
-from .exc import MLIOPackWrongFormat, SlotKeyError
+from .exc import MLIOPackWrongFormat, SlotKeyError, MLIODependenciesNotSatisfied, MLIOPackSlotWrongChecksum
 
 
 class PackManifestSlot(object):
@@ -17,7 +18,7 @@ class PackManifestSlot(object):
         """
         Initialize a new slot
         :param str slot_key: The unique identifier of the slot in the pack
-        :param ml_utils.io.serializers.implementations.SerializerBase serializer: The serializer object that can
+        :param ml_utils.io.serializers.base.SerializerBase serializer: The serializer object that can
         be used to unserialize slot
         :param str serialized_sha256_hash: The hash of the serialized data
         :param typing.Iterable[ml_utils.io.context_dependencies.base.ContextDependencyBase] dependencies: A list of
@@ -226,7 +227,7 @@ class PackManifest(object):
     def _dependencies_from_dict(cls, dependencies_dict):
         """
         Load dependencies from dict data and return objects
-        :param dict[str, str] data:
+        :param dict[str, dict[str, str]] dependencies_dict: Data of dependencies mapped per their id
         :rtype: dict[str, ml_utils.io.context_dependencies.ContextDependencyBase]
         """
         from .context_dependencies import get_dependency_by_type, UnknownContextDependencyType
@@ -319,7 +320,7 @@ class PackManifest(object):
         Convert meta data storage to dictionary object
         :rtype: dict
         """
-        meta = {}
+        meta = dict()
         meta['created_at'] = self.created_at.timestamp()
         meta['updated_at'] = self.updated_at.timestamp()
         meta['python'] = sys.version
@@ -346,9 +347,10 @@ class PackManifest(object):
 
 class Pack(object):
     """
-    MLIO pack that is capable to dump and load ML related objects in unique slots
+    Representation model of IO pack. A Pack can be used to dump and load ML related objects
+    in uniquely identified slots
 
-    The object can also be used as a context manager as:
+    This object implements the context manager interface so that it can be used as:
 
     with open('pack.zip', 'w+b') as fp
         with Pack(fp) as pck:
@@ -356,6 +358,11 @@ class Pack(object):
     """
 
     def __init__(self, file_handler):
+        """
+        Initialize a new or existing pack
+        :param typing.FileIO[bytes] file_handler: A file-like object that will be stored the pack. The file
+         is expected to be opened in binary mode
+        """
         self._file_handler = file_handler
         self._zip_fh = ZipFile(self._file_handler, 'a')
         self._manifest = self._load_or_create_manifest()
@@ -375,19 +382,20 @@ class Pack(object):
 
     def _update_manifest(self, manifest=None):
         """
-        Update
-        :return:
+        Update the manifest file inside the pack. This will also update the updated_at
+        timestamp
         """
         if manifest is None:
             manifest = self._manifest
-        print(manifest.to_dict())
+        manifest.touch_updated_at()
+
         manifest_json = json.dumps(manifest.to_dict())
-        self._zip_fh.writestr(PackManifest.MANIFEST_FILENAME, manifest_json)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self._zip_fh.writestr(PackManifest.MANIFEST_FILENAME, manifest_json)
 
     def __enter__(self):
-        """
-        :rtype: Pack
-        """
+        """:rtype: Pack"""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -411,17 +419,16 @@ class Pack(object):
     def has_slot(self, slot_key):
         """
         Check if a slot exists in the pack
-        :param str slot_key:
+        :param str slot_key: The key of the slot to check for
         :rtype: bool
         """
         return slot_key in self._manifest.slots
 
-    def dump_slot(self, slot_key, obj):
+    def dump(self, slot_key, obj):
         """
         Dump an object in a pack slot
-        :param str slot_key:
-        :param obj:
-        :return:
+        :param str slot_key: The key of the slot
+        :param T obj: The object to be serialized and stored in the pack
         """
         from .serializers import find_suitable_serializer
         from ._lib import hash_file_object
@@ -439,26 +446,73 @@ class Pack(object):
 
             # Calculate sha256
             temp_fh.seek(0, sys_io.SEEK_SET)
-            sha256_hash = 1  # hash_file_object(temp_fh)
+            sha256_hash = hash_file_object(temp_fh)
 
             # Calculate slot metadata
             slot = PackManifestSlot(
                 slot_key=slot_key,
-                sha256_hash=sha256_hash,
+                serialized_sha256_hash=sha256_hash,
                 serializer=serializer,
                 dependencies=serializer.get_context_dependencies()
             )
 
             # Write slot in the pack
             temp_fh.seek(0, sys_io.SEEK_SET)
-            self._zip_fh.write(temp_fh.name, arcname=slot.pack_filename())
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                self._zip_fh.write(temp_fh.name, arcname=slot.pack_filename)
 
             # Update manifest
             self._manifest.insert_slot(slot)
             self._update_manifest()
 
-    def load_slot(self, slot_key):
-        raise NotImplementedError()
+    def load(self, slot_key):
+        """
+        Load a serialized object from a slot in the pack
+        :param str slot_key: The key of the slot to load object from
+        :return: The unserialized object
+        """
+        from ._lib import hash_file_object
 
-    def remove_slot(self, slot_key):
-        raise NotImplementedError()
+        if not self.has_slot(slot_key):
+            raise SlotKeyError("There is no slot with name {}".format(slot_key))
+        slot = self.slots_info[slot_key]
+
+        # Test that dependencies are satisfied
+        for dep in slot.dependencies.values():
+            if not dep.is_satisfied():
+                raise MLIODependenciesNotSatisfied(
+                    "Cannot load because dependencies: {} is not satisfied "
+                    .format(dep.dependency_id()))
+
+        # Check file hash
+        with self._zip_fh.open(slot.pack_filename, 'r') as fp:
+
+            sha256 = hash_file_object(fp)
+            if sha256 != slot.serialized_sha256_hash:
+                raise MLIOPackSlotWrongChecksum(
+                    "Cannot load slot: {} as the serialized data seems corrupted"
+                    .format(slot_key))
+
+        # Load object
+        with self._zip_fh.open(slot.pack_filename, 'r') as fp:
+            return slot.serializer.load(fp)
+
+    def remove(self, slot_key):
+        """
+        Remove a serialized object from a slot
+        :param str slot_key: The key of the slot to remove
+        """
+        if not self.has_slot(slot_key):
+            raise SlotKeyError("There is no slot with name {}".format(slot_key))
+
+        # Delete meta data from manifest file
+        slot = self.slots_info[slot_key]
+
+        self._manifest.remove_slot(slot_key)
+        self._update_manifest()
+
+        # Zero contents of object from archive
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self._zip_fh.writestr(slot.pack_filename, b'')

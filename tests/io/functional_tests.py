@@ -1,9 +1,11 @@
 import unittest
 import tempfile
 
-from ml_utils.io import load, dump, SlotKeyError, Pack
+from ml_utils.io import load, dump, Pack
+from ml_utils.io.exc import SlotKeyError
 
-from .generic import GenericObject
+
+from tests.io.generic import GenericObject
 
 
 class ObjectFixturesMixIn(object):
@@ -68,17 +70,17 @@ class PackApiTestCase(ObjectFixturesMixIn, unittest.TestCase):
         with tempfile.TemporaryFile("w+b") as tf:
             with Pack(tf) as pck:
                 self.assertFalse(pck.has_slot('slot1'))
-                pck.dump_slot('slot1', self.obj2k)
+                pck.dump('slot1', self.obj2k)
                 self.assertTrue(pck.has_slot('slot1'))
 
                 # Try to recover on opened pack
-                recovered_obj2k = pck.load_slot('slot1')
+                recovered_obj2k = pck.load('slot1')
                 self.assertEqualObj2k(recovered_obj2k)
 
             with Pack(tf) as pck:
 
                 # Try to recover on re-opened pack
-                recovered_obj2k = pck.load_slot('slot1')
+                recovered_obj2k = pck.load('slot1')
                 self.assertEqualObj2k(recovered_obj2k)
 
     def test_multislot_dump_load(self):
@@ -89,23 +91,23 @@ class PackApiTestCase(ObjectFixturesMixIn, unittest.TestCase):
                 self.assertFalse(pck.has_slot('1k'))
                 self.assertFalse(pck.has_slot('2k'))
 
-                pck.dump_slot('1k', self.obj1k)
-                pck.dump_slot('2k', self.obj2k)
+                pck.dump('1k', self.obj1k)
+                pck.dump('2k', self.obj2k)
 
                 self.assertTrue(pck.has_slot('1k'))
                 self.assertTrue(pck.has_slot('2k'))
 
                 # Try to recover on opened pack
-                recovered_obj1k = pck.load_slot('1k')
-                recovered_obj2k = pck.load_slot('2k')
+                recovered_obj1k = pck.load('1k')
+                recovered_obj2k = pck.load('2k')
                 self.assertEqualObj1k(recovered_obj1k)
                 self.assertEqualObj2k(recovered_obj2k)
 
             with Pack(tf) as pck:
 
                 # Try to recover on re-opened pack
-                recovered_obj1k = pck.load_slot('1k')
-                recovered_obj2k = pck.load_slot('2k')
+                recovered_obj1k = pck.load('1k')
+                recovered_obj2k = pck.load('2k')
                 self.assertEqualObj1k(recovered_obj1k)
                 self.assertEqualObj2k(recovered_obj2k)
 
@@ -114,17 +116,17 @@ class PackApiTestCase(ObjectFixturesMixIn, unittest.TestCase):
         with tempfile.TemporaryFile("w+b") as tf:
 
             with Pack(tf) as pck:
-                pck.dump_slot('same-slot', self.obj1k)
+                pck.dump('same-slot', self.obj1k)
 
                 with self.assertRaises(SlotKeyError):
                     # Try to re-write on the same slot
-                    pck.dump_slot('same-slot', self.obj1k)
+                    pck.dump('same-slot', self.obj1k)
 
-                pck.remove_slot('same-slot')
+                pck.remove('same-slot')
                 # Try to re-write on the same slot
-                pck.dump_slot('same-slot', self.obj2k)
+                pck.dump('same-slot', self.obj2k)
 
-                recovered_obj2k = pck.load_slot('same-slot')
+                recovered_obj2k = pck.load('same-slot')
                 self.assertEqualObj2k(recovered_obj2k)
 
 

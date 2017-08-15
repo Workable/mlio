@@ -1,6 +1,5 @@
 import unittest
 import mock
-import os
 import json
 from datetime import datetime
 

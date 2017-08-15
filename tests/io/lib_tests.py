@@ -38,6 +38,9 @@ class LibTestCase(unittest.TestCase):
                 for chunk in file_as_blockiter(f, block_size=15)
             ]
 
+            # Test that file object is not closed
+            self.assertFalse(f.closed)
+
         data = bytearray()
         for chunk in chunks:
             data += chunk
@@ -48,6 +51,9 @@ class LibTestCase(unittest.TestCase):
 
         with open(self.random1kdump_filepath, 'r+b') as f:
             hexhash = hash_file_object(f)
+
+            # Test that file object is not closed
+            self.assertFalse(f.closed)
 
         self.assertEqual(self.random1k_sha256, hexhash)
 
