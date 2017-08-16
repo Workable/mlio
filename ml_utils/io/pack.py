@@ -586,3 +586,6 @@ class Pack(object):
 
         # Remove dangling objects
         self._cleanup_dangling_pack_objects()
+
+    def __contains__(self, item):
+        return self.has_slot(item)

@@ -188,6 +188,35 @@ class PackTestCase(ObjectFixturesMixIn, unittest.TestCase):
                 self.assertEqualObj1k(pck.load('slot1'))
                 self.assertEqualObj2k(pck.load('slot2'))
 
+    def test_has_slot_and_contains(self):
+
+        with tempfile.TemporaryFile("w+") as tf:
+            with Pack(tf) as pck:
+                self.assertFalse(pck.has_slot(''))
+                self.assertFalse(pck.has_slot('unknown'))
+                self.assertFalse(pck.has_slot(None))
+                self.assertFalse(pck.has_slot('slot1'))
+
+                self.assertFalse('' in pck)
+                self.assertFalse('unknown' in pck)
+                self.assertFalse('slot1' in pck)
+                self.assertFalse(None in pck)
+
+                pck.dump('slot1', self.obj1k)
+                pck.dump('slot2', self.obj2k)
+
+                self.assertTrue(pck.has_slot('slot1'))
+                self.assertTrue(pck.has_slot('slot2'))
+                self.assertFalse(pck.has_slot(''))
+                self.assertFalse(pck.has_slot('unknown'))
+                self.assertFalse(pck.has_slot(None))
+
+                self.assertTrue('slot1' in pck)
+                self.assertTrue('slot2' in pck)
+                self.assertFalse('' in pck)
+                self.assertFalse('unknown' in pck)
+                self.assertFalse(None in pck)
+
 
 if __name__ == '__main__':
     unittest.main()
