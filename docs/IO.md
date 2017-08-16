@@ -1,42 +1,52 @@
 ## I/O Module
-Toolkit to load and store ML related objects in files. The toolkit was initially designed to store trained models. 
+A flexible and simple toolkit to load and store ML related objects in files. It was initially designed to store
+trained models but it can be used for any type of object. 
 
-## Interoperability
+## Type abstraction
 MLIO is similar to `pickle`, `joblib`, `json` etc, but instead of specializing in one
-type of data model it follows different paths depending the type.
+type of data model it uses different serializers depending the type.
 
-For an example if you try to dump a pure python object it will use `pickle` while
-if you try to save [gensim](https://radimrehurek.com/gensim/) Word2Vec model
-it will use `Word2Vec.load` method that is specialized for this purpose. All this
-magic is performed transparently at `load` and `dump`.
+For example, to dump a pure python object it will use `pickle` while saving a [gensim](https://radimrehurek.com/gensim/) Word2Vec model
+it will use `Word2Vec.load` method that is specialized for this purpose. The serializer is selected transparently 
+at serialization stage depending the type of the given object.
+
+Currently the following serializers are supported:
+* `GensimWord2VecModelsSerializer`: Specialized for `gensim.Word2Vec` models and uses `gensim` internal mechanism store 
+and load models from the file-system.
+* `GenericMLModelsSerializer`: Specialized for `numpy` arrays, `sklearn` models and `xgboost`. It uses `joblib` for 
+serialization.
+* `DefaultSerializer`: It supports any kind of objects and uses `pickle` for serialization. This is the fallback
+serializer.
 
 ## Execution context dependencies
 Many python serializers like `pickle` or `joblib` depend on the state of execution
 enviroment at the time of serialization. For example not all objects pickled with python 2
-can be unpickled on python 3 environment. Another case is an object pickled with `sklearn 0.18` may not
-work with `sklearn 0.19`. For this reason many of these libraries warn you that serialization-deserialization
+can be unpickled on python 3 environment. Also an sklearn model pickled with `sklearn 0.18` may not
+work with `sklearn 0.19`. For this reason many of these libraries warn you that serialization / deserialization
 must be performed in the same execution context.
  
 MLIO comes with dependency descriptors that are automatically applied at
-serialization stage. On de-serialization stage, **all dependencies are validated** in the
-current execution environment and it will early-warn the user before execution reaches
+serialization stage. At deserialization stage, **all dependencies are validated in the
+current execution environment** and it will stop gracefully by raising exception before execution reaches
 an unstable state.
 
 ## Multi-slot pack of objects
 MLIO stores objects in packs, where each object has its dedicated slot identified by an arbitrary string. 
-The final pack is a zip file with a specific internal layout.
+The final pack is wrapped in a zip archive with a specific directory layout.
 
-Some features of this pack format are:
-* **data deduplication**: When two or more slots hold the same data, then only copy of them is stored in the pack.
+The Pack format comes with the following features:
+* **data deduplication**: When two or more slots hold the same data, then only one copy of them is stored in the pack.
 This is specially useful if you want to create cheap slot alias.
-* **data validation**: The sha256 hash of objects is stored along with their data. At de-serialization stage the 
-data are validated.
+* **data validation**: The sha256 hash of objects is stored along in the metadata of Pack. At loading stage an slot will
+first be validated that data are not corrupted and then loaded.
 
-## Simple API
-MLIO API is simple and straigh-forward. The basic object `Pack`, is used to handle file-based object storages. There 
-is no pack creation or initialization stage, as long as you have a file handler, you can use it as MLIO `Pack` object.
+## API
+MLIO API is simple and straight-forward. The basic object `Pack`, is used as wrapper around file-like object and provides
+an API to handle individual slots of the pack. There is no pack creation or initialization stage, as long as you have
+a file handler, you can use it as MLIO `Pack` object.
 
-### Dump, load and remove an object
+### Example: Dump, load and remove an object
+
 ```python
 
 from ml_utils.io import Pack
@@ -65,7 +75,8 @@ with open('thefile', 'r+b') as f:
         pck.remove('object-1')
 ```
 
-### Query metadata
+### Example: Query metadata
+
 ```python
 from ml_utils.io import Pack
 
@@ -80,8 +91,9 @@ with open('thefile', 'w+b') as f:
 ```
 
 ### Compatibility API
-The MLIO can be used as a drop-in replacement for `pickle`, `json` or ect but it does not support the mutli-slot API. 
-Still though packs that are created with compatibility API are fully compatible with the classic API.
+The MLIO comes with a compatibility API to be used as a drop-in replacement for `pickle`, `json` or etc but  
+This API does not support the mutli-slot functionality and Any object will be stored in the default slot `_default`. 
+A Pack created using the compatibility API can be later operated with the classic API.
 
  
  ```python
