@@ -31,7 +31,7 @@ class PackManifestSlotTestCase(unittest.TestCase):
         self.assertEqual(slot.slot_key, 'key')
         self.assertIs(slot.serializer, ser)
         self.assertDictEqual(slot.dependencies, {})
-        self.assertEqual(slot.pack_filename, 'ahash.slot')
+        self.assertEqual(slot.pack_object, 'ahash.slot')
 
     def test_ctor_with_dependencies(self):
         ser = GenericMLModelsSerializer()
@@ -45,7 +45,7 @@ class PackManifestSlotTestCase(unittest.TestCase):
         self.assertIs(slot.serializer, ser)
         self.assertEqual(slot.serialized_sha256_hash, 'ahash')
         self.assertDictEqual(slot.dependencies, self.manifest_deps_by_id)
-        self.assertEqual(slot.pack_filename, 'ahash.slot')
+        self.assertEqual(slot.pack_object, 'ahash.slot')
 
     def test_ctor_with_wrong_dep_types(self):
         ser = GenericMLModelsSerializer()
@@ -89,7 +89,7 @@ class PackManifestSlotTestCase(unittest.TestCase):
         self.assertEqual(slot.slot_key, 'nice slot')
         self.assertIsInstance(slot.serializer, GenericMLModelsSerializer)
         self.assertDictEqual(slot.dependencies, self.manifest_deps_by_id)
-        self.assertEqual(slot.pack_filename, 'ahash.slot')
+        self.assertEqual(slot.pack_object, 'ahash.slot')
         self.assertEqual(slot.serialized_sha256_hash, 'ahash')
 
     def test_from_dict_missing_hash_field(self):
@@ -132,6 +132,35 @@ class PackManifestSlotTestCase(unittest.TestCase):
                 },
                 manifest_dependencies=manifest_deps
             )
+
+    def test_find_unsatisfied_dependencies(self):
+        ser = GenericMLModelsSerializer()
+        deps = [
+            ModuleVersionContextDependency('moduleone', '==1.1.0'),
+            ModuleVersionContextDependency('moduletwo', '~=1.2.0'),
+        ]
+        slot = PackManifestSlot(
+            slot_key='key',
+            serializer=ser,
+            serialized_sha256_hash='ahash',
+            dependencies=deps
+        )
+
+        with mock.patch('ml_utils.io.context_dependencies.module_version.get_installed_module_version') \
+                as mocked_get_installed_module:
+
+            # Mock that everything is satisfied
+            mocked_get_installed_module.side_effect = lambda m: {'moduleone': '1.1.0', 'moduletwo': '1.2.0'}[m]
+            self.assertListEqual(slot.find_unsatisfied_dependencies(), [])
+
+            # Mock that one dep is not satisfied
+            mocked_get_installed_module.side_effect = lambda m: {'moduleone': '1.2.0', 'moduletwo': '1.2.5'}[m]
+            self.assertListEqual(slot.find_unsatisfied_dependencies(), ['module-version:moduleone-==1.1.0'])
+
+            # Mock that two deps are not satisfied
+            mocked_get_installed_module.side_effect = lambda m: {'moduleone': '1.2.0', 'moduletwo': '1.0.5'}[m]
+            self.assertListEqual(slot.find_unsatisfied_dependencies(),
+                                 ['module-version:moduleone-==1.1.0', 'module-version:moduletwo-~=1.2.0'])
 
 
 class PackManifestTestCase(unittest.TestCase):

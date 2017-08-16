@@ -46,10 +46,22 @@ class PackManifestSlot(object):
         """:rtype: dict[str, ml_utils.io.context_dependencies.base.ContextDependencyBase]"""
         return self._dependencies
 
-    @property
-    def pack_filename(self):
+    def find_unsatisfied_dependencies(self):
         """
-        The internal filename of the pack
+        Get the list with unsatisfied dependencies on the current execution context
+        :return: A list with the dependencies ids
+        :rtype: list[str]
+        """
+        return [
+            dep_id
+            for dep_id, dep in self.dependencies.items()
+            if not dep.is_satisfied()
+        ]
+
+    @property
+    def pack_object(self):
+        """
+        The internal name of the data object in the pack
         :rtype: str
         """
         return "{}.slot".format(self.serialized_sha256_hash)
@@ -363,6 +375,14 @@ class Pack(object):
         :param typing.FileIO[bytes] file_handler: A file-like object that will be stored the pack. The file
          is expected to be opened in binary mode
         """
+
+        # Check type of file object
+        if 'b' not in getattr(file_handler, 'mode', ''):
+            if hasattr(file_handler, 'buffer'):
+                file_handler = file_handler.buffer.raw
+            else:
+                raise ValueError("The file object must be opened in binary mode")
+
         self._file_handler = file_handler
         self._zip_fh = ZipFile(self._file_handler, 'a')
         self._manifest = self._load_or_create_manifest()
@@ -394,6 +414,49 @@ class Pack(object):
             warnings.simplefilter("ignore")
             self._zip_fh.writestr(PackManifest.MANIFEST_FILENAME, manifest_json)
 
+    def _existing_pack_objects(self):
+        """
+        Get a list of existing stored objects in the pack.
+
+        Because ZipFile does not permit removing items, we consider zero sized objects as non-existing
+        :return: A list of existing pack objects
+        :rtype: set(str)
+        """
+
+        # ZipFile keeps duplicate entries but only the last one is effective
+        object_sizes = {}
+        for zip_entry in self._zip_fh.infolist():
+            if zip_entry.filename == PackManifest.MANIFEST_FILENAME:
+                continue
+            object_sizes[zip_entry.filename] = zip_entry.file_size
+
+        return set(
+            object_name
+            for object_name, object_size in object_sizes.items()
+            if object_size
+        )
+
+    def _cleanup_dangling_pack_objects(self):
+        """
+        Find pack objects that are not referenced by any slot and remove them
+        :return: The list of found dangling objects
+        :rtype: set(str)
+        """
+
+        referenced_objects = set(
+            slot.pack_object
+            for slot in self.slots_info.values()
+        )
+
+        unreferenced_objects = self._existing_pack_objects() - referenced_objects
+        for pack_object in unreferenced_objects:
+            # Zero contents of object from archive
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                self._zip_fh.writestr(pack_object, b'')
+
+        return unreferenced_objects
+
     def __enter__(self):
         """:rtype: Pack"""
         return self
@@ -415,6 +478,14 @@ class Pack(object):
         :rtype: dict[str, PackManifestSlot]
         """
         return self._manifest.slots
+
+    @property
+    def manifest_info(self):
+        """
+        Get information about manifest
+        :rtype: PackManifest
+        """
+        return self._manifest
 
     def has_slot(self, slot_key):
         """
@@ -456,11 +527,13 @@ class Pack(object):
                 dependencies=serializer.get_context_dependencies()
             )
 
-            # Write slot in the pack
-            temp_fh.seek(0, sys_io.SEEK_SET)
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                self._zip_fh.write(temp_fh.name, arcname=slot.pack_filename)
+            # Check if there is already a pack object (dedup)
+            if slot.pack_object not in self._existing_pack_objects():
+                # Store pack object
+                temp_fh.seek(0, sys_io.SEEK_SET)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    self._zip_fh.write(temp_fh.name, arcname=slot.pack_object)
 
             # Update manifest
             self._manifest.insert_slot(slot)
@@ -479,14 +552,15 @@ class Pack(object):
         slot = self.slots_info[slot_key]
 
         # Test that dependencies are satisfied
-        for dep in slot.dependencies.values():
-            if not dep.is_satisfied():
-                raise MLIODependenciesNotSatisfied(
-                    "Cannot load because dependencies: {} is not satisfied "
-                    .format(dep.dependency_id()))
+        unsatisfied_dep_ids = slot.find_unsatisfied_dependencies()
+
+        if unsatisfied_dep_ids:
+            raise MLIODependenciesNotSatisfied(
+                "Cannot load because dependencies: {} are not satisfied "
+                .format(", ".join(unsatisfied_dep_ids)))
 
         # Check file hash
-        with self._zip_fh.open(slot.pack_filename, 'r') as fp:
+        with self._zip_fh.open(slot.pack_object, 'r') as fp:
 
             sha256 = hash_file_object(fp)
             if sha256 != slot.serialized_sha256_hash:
@@ -495,7 +569,7 @@ class Pack(object):
                     .format(slot_key))
 
         # Load object
-        with self._zip_fh.open(slot.pack_filename, 'r') as fp:
+        with self._zip_fh.open(slot.pack_object, 'r') as fp:
             return slot.serializer.load(fp)
 
     def remove(self, slot_key):
@@ -507,12 +581,8 @@ class Pack(object):
             raise SlotKeyError("There is no slot with name {}".format(slot_key))
 
         # Delete meta data from manifest file
-        slot = self.slots_info[slot_key]
-
         self._manifest.remove_slot(slot_key)
         self._update_manifest()
 
-        # Zero contents of object from archive
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            self._zip_fh.writestr(slot.pack_filename, b'')
+        # Remove dangling objects
+        self._cleanup_dangling_pack_objects()
