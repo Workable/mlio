@@ -4,7 +4,7 @@ import sys
 import io as sys_io
 import warnings
 from zipfile import ZipFile
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from .exc import MLIOPackWrongFormat, SlotKeyError, MLIODependenciesNotSatisfied, MLIOPackSlotWrongChecksum
 
@@ -313,11 +313,11 @@ class PackManifest(object):
         # Recover meta-data
         created_at = data.get('meta', {}).get('created_at', None)
         if created_at is not None:
-            created_at = datetime.fromtimestamp(created_at)
+            created_at = datetime.utcfromtimestamp(created_at).replace(tzinfo=timezone(timedelta(0)))
 
         updated_at = data.get('meta', {}).get('updated_at', None)
         if updated_at is not None:
-            updated_at = datetime.fromtimestamp(updated_at)
+            updated_at = datetime.utcfromtimestamp(updated_at).replace(tzinfo=timezone(timedelta(0)))
 
         # Extract timestamp from metadata
         return PackManifest(

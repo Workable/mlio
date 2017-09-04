@@ -1,7 +1,7 @@
 import unittest
 import mock
 import json
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from ml_utils.io.exc import MLIOPackWrongFormat, SlotKeyError
 from ml_utils.io.pack import PackManifestSlot, PackManifest
@@ -323,7 +323,7 @@ class PackManifestTestCase(unittest.TestCase):
     @mock.patch('ml_utils.io.pack.datetime')
     @mock.patch('ml_utils.io.pack.sys')
     def test_to_dict(self, mocked_sys, mocked_datetime):
-        creation_time = datetime(2017, 1, 1, 2, 2, 2)
+        creation_time = datetime(2017, 1, 1, 0, 2, 2, tzinfo=timezone(timedelta(0)))
         mocked_datetime.utcnow.return_value = creation_time
         mocked_sys.version = '3.6.1 (default, Apr  4 2017, 09:40:21) \n' \
                              '[GCC 4.2.1 Compatible Apple LLVM 8.1.0 (clang-802.0.38)]'
@@ -334,7 +334,7 @@ class PackManifestTestCase(unittest.TestCase):
         )
 
         # Change updated_at timestamp
-        updated_time = datetime(2018, 1, 1, 2, 2, 2)
+        updated_time = datetime(2018, 1, 1, 0, 2, 2, tzinfo=timezone(timedelta(0)))
         mocked_datetime.utcnow.return_value = updated_time
         manifest.touch_updated_at()
 
@@ -412,8 +412,8 @@ class PackManifestTestCase(unittest.TestCase):
             })
 
     def test_from_dict(self):
-        creation_time = datetime(2017, 1, 1, 2, 2, 2)
-        updated_time = datetime(2018, 1, 1, 2, 2, 2)
+        creation_time = datetime(2017, 1, 1, 0, 2, 2, tzinfo=timezone(timedelta(0)))
+        updated_time = datetime(2018, 1, 1, 0, 2, 2, tzinfo=timezone(timedelta(0)))
 
         manifest = PackManifest.from_dict(self.manifest_dict)
 
