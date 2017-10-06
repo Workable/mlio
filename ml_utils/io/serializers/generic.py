@@ -35,7 +35,7 @@ class DefaultSerializer(EmulateStringOperationsMixIn, SerializerBase):
 
 class GenericMLModelsSerializer(EmulateStringOperationsMixIn, SerializerBase):
     """
-    Generic ML serializer that will acccept sklearn, numpy and xgboost objects of any type.
+    Generic ML serializer that will accept sklearn, numpy and xgboost objects of any type.
     It uses joblib to perform the operation
     """
 
