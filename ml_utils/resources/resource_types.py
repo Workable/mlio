@@ -56,7 +56,7 @@ class ResourceBase(object):
 
         repository = self.manager.repositories.which(self.filename)
         if not repository:
-            error_msg = "Resource[{s.id}]: Cannot find resource file in any repository".format(s=self)
+            error_msg = "Resource[{s.id}]: Cannot find resource file \"{s.filename}\" in any repository".format(s=self)
             logger.warning(error_msg)
             raise ResourceNotFoundError(error_msg)
 
