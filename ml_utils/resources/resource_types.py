@@ -148,6 +148,18 @@ class VocabularyResource(ResourceBase):
     A vocabulary is a set of unique entities stored per line in a text file.
     """
 
+    def __init__(self, *args, transformer=None, **kwargs):
+        """
+        :param args:
+        :param (str)-> str transformer: A callable to transform vocabulary entries before storing them in memory.
+        By default it uses str.lower.
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self._transformer = str.lower
+        if transformer is not None:
+            self._transformer = transformer
+
     def update_object(self, obj):
         # Check the type of the object
         if not isinstance(obj, set):
@@ -156,7 +168,7 @@ class VocabularyResource(ResourceBase):
 
     def _load_object_impl(self, opener):
         with opener(mode='r', encoding='utf-8') as f:
-            return set(filter(None, (word.lower().strip() for word in f if word)))
+            return set(filter(None, (self._transformer(word).strip() for word in f if word)))
 
     def _dump_object_impl(self, obj, opener):
         with opener(mode='w', encoding='utf-8') as f:

@@ -1,5 +1,5 @@
 import unittest
-import mock
+from unittest import mock
 from functools import partial
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -82,13 +82,22 @@ class DictionaryResourceTestCase(unittest.TestCase):
 class VocabularyResourceTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.voc_entries = {
+        self.voc_lower_entries = {
             'one',
             'two',
             'νιαις œ•³≥≠÷’…ß÷≠ γιουνικοτ',
             'again',
             'leading space',
             'trailing space',
+        }
+
+        self.voc_upper_entries = {
+            'ONE',
+            'TWO',
+            'ΝΙΑΙΣ Œ•³≥≠÷’…SS÷≠ ΓΙΟΥΝΙΚΟΤ',
+            'AGAIN',
+            'LEADING SPACE',
+            'TRAILING SPACE',
         }
 
     def test_construction_and_attributes(self):
@@ -111,7 +120,20 @@ class VocabularyResourceTestCase(unittest.TestCase):
             r = VocabularyResource('theid', 'something')
 
             self.assertSetEqual(
-                self.voc_entries,
+                self.voc_lower_entries,
+                r._load_object_impl(opener))
+
+    def test_load_object_custom_transformer(self):
+        with TemporaryDirectory() as tmp_dir:
+            opener = partial(open, Path(tmp_dir) / 'test.json')
+
+            with opener(mode='wt+', encoding='utf-8') as f:
+                f.write(load_fixture('something.voc'))
+
+            r = VocabularyResource('theid', 'something', transformer=str.upper)
+
+            self.assertSetEqual(
+                self.voc_upper_entries,
                 r._load_object_impl(opener))
 
     def test_dump_object(self):
