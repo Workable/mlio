@@ -1,7 +1,7 @@
 import warnings
 import unittest
 import tempfile
-import mock
+from unittest import mock
 from datetime import datetime
 from ml_utils.io import Pack
 from ml_utils.io.context_dependencies.module_version import ModuleVersionContextDependency

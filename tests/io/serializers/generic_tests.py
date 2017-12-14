@@ -2,12 +2,12 @@ import unittest
 import tempfile
 import io as sys_io
 import packaging
+from unittest import mock
 
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 import numpy as np
-import mock
 
 from ml_utils.io.serializers.generic import (DefaultSerializer, GenericMLModelsSerializer)
 from tests.io.generic import GenericObject

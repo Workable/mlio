@@ -1,6 +1,6 @@
 import unittest
 import os
-import mock
+from unittest import mock
 from tempfile import TemporaryDirectory
 from pathlib import Path
 from contextlib import ExitStack

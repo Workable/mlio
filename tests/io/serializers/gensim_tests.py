@@ -1,8 +1,8 @@
 import unittest
+from unittest import mock
 import tempfile
 import io as sys_io
 import packaging.version
-import mock
 
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier

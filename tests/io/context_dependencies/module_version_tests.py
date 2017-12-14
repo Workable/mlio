@@ -1,7 +1,7 @@
 import unittest
 import packaging.version
 import packaging.specifiers
-import mock
+from unittest import mock
 
 from ml_utils.io.context_dependencies.module_version import (
     ModuleVersionContextDependency, get_installed_module_version)
