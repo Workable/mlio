@@ -1,5 +1,8 @@
 import shutil
-from tempfile import NamedTemporaryFile
+import io as sys_io
+from pathlib import Path
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+import tarfile
 
 from .base import SerializerBase, get_object_root_module
 
@@ -8,6 +11,7 @@ class GensimWord2VecModelsSerializer(SerializerBase):
     """
     Gensim Word2Vec specific serializer. It will use gensim's internal function to load and store model
     """
+
     @classmethod
     def serializer_type(cls):
         return 'gensim-word2vec'
@@ -23,15 +27,36 @@ class GensimWord2VecModelsSerializer(SerializerBase):
 
     def dump(self, obj, fh):
         self._add_gensim_module_version_dependency()
-        return obj.save(fh)
+
+        # Store gensim model inside a clean directory
+        with TemporaryDirectory() as tmp_dir:
+
+            root_file = str(Path(tmp_dir) / 'root.w2v')
+            obj.save(root_file)
+
+            # Create an archive of all generated files
+            with NamedTemporaryFile(mode='w+b') as temp_file:
+                tar_fh = tarfile.TarFile(fileobj=temp_file, mode='w')
+
+                for entry in Path(tmp_dir).iterdir():
+                    if entry.is_file():
+                        tar_fh.add(str(entry), str(entry.name))
+
+                # Store this archive in the slot
+                temp_file.seek(0, sys_io.SEEK_SET)
+                shutil.copyfileobj(temp_file, fh)
 
     def load(self, fh):
         from gensim.models import Word2Vec
 
-        with NamedTemporaryFile('w+b') as temp_fh:
-            shutil.copyfileobj(fh, temp_fh)
-            temp_fh.flush()
-            return Word2Vec.load(temp_fh.name)
+        # Deflate tar in a temporary directory
+        with tarfile.TarFile(fileobj=fh, mode='r') as tar_fh:
+            with TemporaryDirectory() as tmp_dir:
+                tmp_dir = Path(tmp_dir)
+                tar_fh.extractall(tmp_dir)
+
+                # Open root object
+                return Word2Vec.load(str(tmp_dir / 'root.w2v'))
 
     def dumps(self, obj):
         self._add_gensim_module_version_dependency()
