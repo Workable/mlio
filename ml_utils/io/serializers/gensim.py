@@ -36,11 +36,13 @@ class GensimWord2VecModelsSerializer(SerializerBase):
 
             # Create an archive of all generated files
             with NamedTemporaryFile(mode='w+b') as temp_file:
-                tar_fh = tarfile.TarFile(fileobj=temp_file, mode='w')
+                tar_fh = tarfile.open(fileobj=temp_file, mode='w|')
 
                 for entry in Path(tmp_dir).iterdir():
                     if entry.is_file():
                         tar_fh.add(str(entry), str(entry.name))
+
+                tar_fh.close()
 
                 # Store this archive in the slot
                 temp_file.seek(0, sys_io.SEEK_SET)
@@ -50,7 +52,7 @@ class GensimWord2VecModelsSerializer(SerializerBase):
         from gensim.models import Word2Vec
 
         # Deflate tar in a temporary directory
-        with tarfile.TarFile(fileobj=fh, mode='r') as tar_fh:
+        with tarfile.open(fileobj=fh, mode='r|') as tar_fh:
             with TemporaryDirectory() as tmp_dir:
                 tmp_dir = Path(tmp_dir)
                 tar_fh.extractall(tmp_dir)

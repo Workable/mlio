@@ -3,13 +3,13 @@ from unittest import mock
 import tempfile
 import io as sys_io
 import packaging.version
+from pathlib import Path
 
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from gensim.models import Word2Vec
 import numpy as np
-
 
 from ml_utils.io.serializers.gensim import GensimWord2VecModelsSerializer
 from tests.io.generic import GenericObject
@@ -27,11 +27,9 @@ class GensimWord2VecTestCase(unittest.TestCase):
         self.wv_model = Word2Vec(RING_VERSE, size=10, window=3, min_count=1, workers=4)
 
     def test_class_method(self):
-
         self.assertTrue(GensimWord2VecModelsSerializer.serializer_type(), 'gensim')
 
     def test_can_process(self):
-
         # Expected to be processed
         self.assertTrue(GensimWord2VecModelsSerializer.can_serialize(self.wv_model))
 
@@ -58,6 +56,19 @@ class GensimWord2VecTestCase(unittest.TestCase):
 
         self.assertEqual(len(ser.get_context_dependencies()), 1)
         self.assertEqual(ser.get_context_dependencies()[0].dependency_id(), "module-version:gensim-~=0.14.1")
+
+    def test_dump_load_file_integrated(self):
+        from ml_utils.io.compat import load, dump
+
+        ser = GensimWord2VecModelsSerializer()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with open(Path(tmp_dir) / 'model.w2v', 'wb') as f:
+                dump(self.wv_model, f)
+
+            with open(Path(tmp_dir) / 'model.w2v', 'rb') as f:
+                recovered_wv_model = load(f)
+
+        self.assertTrue((self.wv_model.wv['one'] == recovered_wv_model.wv['one']).all())
 
     @mock.patch('ml_utils.io.serializers.base.get_installed_module_version')
     def test_dump_load_string(self, mocked_get_installed_module_version):
