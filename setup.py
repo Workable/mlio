@@ -1,13 +1,18 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
+import re
+import ast
 from setuptools import setup
+
+_version_re = re.compile(r'__version__\s+=\s+(.*)')
+
+with open('mlio/__init__.py', 'rb') as f:
+    version = str(ast.literal_eval(_version_re.search(
+        f.read().decode('utf-8')).group(1)))
 
 with open('requirements.txt', 'r') as fp:
     requirements = [x.strip() for x in fp.readlines()]
 
 setup(name='mlio',
-      version='1.0.0',
+      version=version,
       description='I/O for machine learning',
       author='Konstantinos Paliouras',
       author_email='paliouras@workable.com',
