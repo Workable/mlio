@@ -49,7 +49,7 @@ a file handler, you can use it as MLIO `Pack` object.
 
 ```python
 
-from ml_utils.io import Pack
+from mlio.io import Pack
 
 m1 = ...
 m2 = ...
@@ -78,7 +78,7 @@ with open('thefile', 'r+b') as f:
 ### Example: Query metadata
 
 ```python
-from ml_utils.io import Pack
+from mlio.io import Pack
 
 # Open a pack file and read metadata
 with open('thefile', 'w+b') as f:
@@ -101,7 +101,7 @@ A Pack created using the compatibility API can be later operated with the classi
 # from pickle import load, dump
 
 # MLIO can be used in the same way
-from ml_utils.io import load, dump
+from mlio.io import load, dump
 
 model = Model()
 with open('thefile', 'w+b') as f:

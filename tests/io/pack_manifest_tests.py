@@ -3,11 +3,11 @@ from unittest import mock
 import json
 from datetime import datetime, timezone, timedelta
 
-from ml_utils.io.exc import MLIOPackWrongFormat, SlotKeyError
-from ml_utils.io.pack import PackManifestSlot, PackManifest
-from ml_utils.io.serializers.generic import GenericMLModelsSerializer
-from ml_utils.io.serializers.gensim import GensimWord2VecModelsSerializer
-from ml_utils.io.context_dependencies.module_version import ModuleVersionContextDependency
+from mlio.io.exc import MLIOPackWrongFormat, SlotKeyError
+from mlio.io.pack import PackManifestSlot, PackManifest
+from mlio.io.serializers.generic import GenericMLModelsSerializer
+from mlio.io.serializers.gensim import GensimWord2VecModelsSerializer
+from mlio.io.context_dependencies.module_version import ModuleVersionContextDependency
 
 from tests import fixtures
 
@@ -146,7 +146,7 @@ class PackManifestSlotTestCase(unittest.TestCase):
             dependencies=deps
         )
 
-        with mock.patch('ml_utils.io.context_dependencies.module_version.get_installed_module_version') \
+        with mock.patch('mlio.io.context_dependencies.module_version.get_installed_module_version') \
                 as mocked_get_installed_module:
 
             # Mock that everything is satisfied
@@ -199,7 +199,7 @@ class PackManifestTestCase(unittest.TestCase):
         with open(fixtures.file_path('manifest.json'), 'r') as f:
             self.manifest_dict = json.load(f)
 
-    @mock.patch('ml_utils.io.pack.datetime')
+    @mock.patch('mlio.io.pack.datetime')
     def test_ctor_empty(self, mocked_datetime):
         creation_time = datetime(2017, 1, 1, 2, 2, 2)
         mocked_datetime.utcnow.return_value = creation_time
@@ -211,7 +211,7 @@ class PackManifestTestCase(unittest.TestCase):
         self.assertEqual(manifest.created_at, creation_time)
         self.assertEqual(manifest.updated_at, creation_time)
 
-    @mock.patch('ml_utils.io.pack.datetime')
+    @mock.patch('mlio.io.pack.datetime')
     def test_ctor(self, mocked_datetime):
         creation_time = datetime(2017, 1, 1, 2, 2, 2)
         mocked_datetime.utcnow.return_value = creation_time
@@ -237,7 +237,7 @@ class PackManifestTestCase(unittest.TestCase):
         self.assertEqual(manifest.created_at, creation_time)
         self.assertEqual(manifest.updated_at, creation_time)
 
-    @mock.patch('ml_utils.io.pack.datetime')
+    @mock.patch('mlio.io.pack.datetime')
     def test_touch_update_at(self, mocked_datetime):
         creation_time = datetime(2017, 1, 1, 2, 2, 2)
 
@@ -296,7 +296,7 @@ class PackManifestTestCase(unittest.TestCase):
         with self.assertRaises(SlotKeyError):
             manifest.remove_slot('unknown')
 
-    @mock.patch('ml_utils.io.pack.datetime')
+    @mock.patch('mlio.io.pack.datetime')
     def test_remove_slot(self, mocked_datetime):
         creation_time = datetime(2017, 1, 1, 2, 2, 2)
         mocked_datetime.utcnow.return_value = creation_time
@@ -320,8 +320,8 @@ class PackManifestTestCase(unittest.TestCase):
         self.assertDictEqual(manifest.slots, {})
         self.assertDictEqual(manifest.dependencies, {})
 
-    @mock.patch('ml_utils.io.pack.datetime')
-    @mock.patch('ml_utils.io.pack.sys')
+    @mock.patch('mlio.io.pack.datetime')
+    @mock.patch('mlio.io.pack.sys')
     def test_to_dict(self, mocked_sys, mocked_datetime):
         creation_time = datetime(2017, 1, 1, 0, 2, 2, tzinfo=timezone(timedelta(0)))
         mocked_datetime.utcnow.return_value = creation_time

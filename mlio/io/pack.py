@@ -18,10 +18,10 @@ class PackManifestSlot(object):
         """
         Initialize a new slot
         :param str slot_key: The unique identifier of the slot in the pack
-        :param ml_utils.io.serializers.base.SerializerBase serializer: The serializer object that can
+        :param mlio.io.serializers.base.SerializerBase serializer: The serializer object that can
         be used to unserialize slot
         :param str serialized_sha256_hash: The hash of the serialized data
-        :param typing.Iterable[ml_utils.io.context_dependencies.base.ContextDependencyBase] dependencies: A list of
+        :param typing.Iterable[mlio.io.context_dependencies.base.ContextDependencyBase] dependencies: A list of
         all context dependencies that this slot requires in order to un-serialize
         """
         from .context_dependencies.base import ContextDependencyBase
@@ -43,7 +43,7 @@ class PackManifestSlot(object):
 
     @property
     def dependencies(self):
-        """:rtype: dict[str, ml_utils.io.context_dependencies.base.ContextDependencyBase]"""
+        """:rtype: dict[str, mlio.io.context_dependencies.base.ContextDependencyBase]"""
         return self._dependencies
 
     def find_unsatisfied_dependencies(self):
@@ -72,7 +72,7 @@ class PackManifestSlot(object):
         Recover an instance from dictionary format
         :param str slot_key: The key of this slot
         :param dict data: Dictionary with all metadata of the manifest slot
-        :param dict[str, ml_utils.io.context_dependencies.base.ContextDependencyBase] manifest_dependencies: All the
+        :param dict[str, mlio.io.context_dependencies.base.ContextDependencyBase] manifest_dependencies: All the
         dependencies declared in the PackManifest mapped by their id
         :rtype: PackManifestSlot
         """
@@ -128,7 +128,7 @@ class PackManifest(object):
     def __init__(self, dependencies=None, slots=None, created_at=None, updated_at=None):
         """
         Initialize a new manifest instance
-        :param typing.Iterable[ml_utils.io.context_dependencies.base.ContextDependencyBase]|None dependencies: The list
+        :param typing.Iterable[mlio.io.context_dependencies.base.ContextDependencyBase]|None dependencies: The list
         with dependencies that this slot holds
         :param typing.Iterable[PackManifestSlot]|None slots: The list with slots that this pack holds
         :param datetime|None created_at: The datetime this pack was created. If None it will be set to
@@ -161,7 +161,7 @@ class PackManifest(object):
 
     @property
     def dependencies(self):
-        """:rtype: dict[str, ml_utils.io.context_dependencies.base.ContextDependencyBase] """
+        """:rtype: dict[str, mlio.io.context_dependencies.base.ContextDependencyBase] """
         return self._dependencies
 
     @property
@@ -240,7 +240,7 @@ class PackManifest(object):
         """
         Load dependencies from dict data and return objects
         :param dict[str, dict[str, str]] dependencies_dict: Data of dependencies mapped per their id
-        :rtype: dict[str, ml_utils.io.context_dependencies.ContextDependencyBase]
+        :rtype: dict[str, mlio.io.context_dependencies.ContextDependencyBase]
         """
         from .context_dependencies import get_dependency_by_type, UnknownContextDependencyType
 
@@ -275,7 +275,7 @@ class PackManifest(object):
         """
         Load slots from dict data and return objects
         :param dict[str, dict] slots_dict: Description dictionary mapped per slot key
-        :param  dict[str, ml_utils.io.context_dependencies.ContextDependencyBase] manifest_dependencies: The manifest
+        :param  dict[str, mlio.io.context_dependencies.ContextDependencyBase] manifest_dependencies: The manifest
         dependencies
         :rtype: list[PackManifestSlot]
         """

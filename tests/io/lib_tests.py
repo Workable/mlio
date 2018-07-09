@@ -1,6 +1,6 @@
 import unittest
 
-from ml_utils.io._lib import file_as_blockiter, hash_file_object
+from mlio.io._lib import file_as_blockiter, hash_file_object
 from tests import fixtures
 
 

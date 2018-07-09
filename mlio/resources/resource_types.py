@@ -2,7 +2,7 @@ import logging as _logging
 from functools import partial
 import json
 
-from ml_utils import io as mlio
+from mlio import io as mlio
 
 from .exceptions import AlreadyBoundResourceError, UnboundResourceError, ResourceNotFoundError, ResourceNotLoadedError
 
@@ -29,7 +29,7 @@ class ResourceBase(object):
     def manager(self):
         """
         Get the bound resource manager. If not bound with a manager it will raise exception
-        :rtype: ml_utils.resources.base.ResourceManager
+        :rtype: mlio.resources.base.ResourceManager
         """
         if self._manager is None:
             raise UnboundResourceError("Cannot access resource manager of unbound resource '{}'".format(self.id))
@@ -38,7 +38,7 @@ class ResourceBase(object):
     def bind_manager(self, manager):
         """
         Bind a manager on the current resource object.
-        :param ml_utils.resources.base.ResourceManager manager: The resource manager to bind on this
+        :param mlio.resources.base.ResourceManager manager: The resource manager to bind on this
         resource at.
         """
         if self._manager is not None:

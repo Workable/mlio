@@ -1,8 +1,8 @@
 import unittest
 import tempfile
 
-from ml_utils.io import load, dump, Pack
-from ml_utils.io.exc import SlotKeyError
+from mlio.io import load, dump, Pack
+from mlio.io.exc import SlotKeyError
 
 from tests.io.generic import ObjectFixturesMixIn
 

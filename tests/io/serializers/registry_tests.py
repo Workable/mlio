@@ -6,11 +6,11 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 
 
-from ml_utils.io.serializers._registry import (get_serializer_by_type, find_suitable_serializer, UnknownSerializer,
-                                               register_serializer)
-from ml_utils.io.serializers.base import SerializerBase
-from ml_utils.io.serializers.generic import DefaultSerializer, GenericMLModelsSerializer
-from ml_utils.io.serializers.gensim import GensimWord2VecModelsSerializer
+from mlio.io.serializers._registry import (get_serializer_by_type, find_suitable_serializer, UnknownSerializer,
+                                           register_serializer)
+from mlio.io.serializers.base import SerializerBase
+from mlio.io.serializers.generic import DefaultSerializer, GenericMLModelsSerializer
+from mlio.io.serializers.gensim import GensimWord2VecModelsSerializer
 
 
 from tests.io.generic import GenericObject

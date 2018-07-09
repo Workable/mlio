@@ -28,7 +28,7 @@ class SerializerBase(object):
     def get_context_dependencies(self):
         """
         Get the list with all context dependencies that where injected at serialization stage
-        :rtype: list[ml_utils.io.context_dependencies.ContextDependencyBase]
+        :rtype: list[mlio.io.context_dependencies.ContextDependencyBase]
         """
         return self._context_dependencies
 

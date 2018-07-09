@@ -6,8 +6,8 @@ from pathlib import Path
 from contextlib import ExitStack
 
 
-from ml_utils.resources.repositories import RepositoryBase, LocalDirectoryRepository, RepositoriesContainer
-from ml_utils.resources.exceptions import RepositoryReadOnlyError, RepositoryPathTraversalError
+from mlio.resources.repositories import RepositoryBase, LocalDirectoryRepository, RepositoriesContainer
+from mlio.resources.exceptions import RepositoryReadOnlyError, RepositoryPathTraversalError
 
 
 class RepositoryBaseTestCase(unittest.TestCase):
@@ -190,7 +190,7 @@ class LocalRepositoryBaseTestCase(unittest.TestCase):
             self.assertFalse(rd.has('one'))
             self.assertFalse(rd.has('/one/two'))
 
-    @mock.patch('ml_utils.resources.repositories.open')
+    @mock.patch('mlio.resources.repositories.open')
     def test_method_open_readonly(self, mocked_open):
 
         with TemporaryDirectory() as tmpdirname:
@@ -211,7 +211,7 @@ class LocalRepositoryBaseTestCase(unittest.TestCase):
             with self.assertRaises(RepositoryReadOnlyError):
                 rd.open('a.file.txt', mode='w+')
 
-    @mock.patch('ml_utils.resources.repositories.open')
+    @mock.patch('mlio.resources.repositories.open')
     def test_method_open_writable(self, mocked_open):
         with TemporaryDirectory() as tmpdirname:
             rd = LocalDirectoryRepository(

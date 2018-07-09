@@ -1,10 +1,10 @@
 import unittest
 from pathlib import Path
 
-from ml_utils.resources.exceptions import ResourceNotFoundError
-from ml_utils.resources.manager import ResourceManager
-from ml_utils.resources.repositories import RepositoriesContainer, LocalDirectoryRepository
-from ml_utils.resources.resource_types import MLIOResource, VocabularyResource
+from mlio.resources.exceptions import ResourceNotFoundError
+from mlio.resources.manager import ResourceManager
+from mlio.resources.repositories import RepositoriesContainer, LocalDirectoryRepository
+from mlio.resources.resource_types import MLIOResource, VocabularyResource
 
 
 class ManagerBaseTestCase(unittest.TestCase):

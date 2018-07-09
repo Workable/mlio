@@ -3,10 +3,10 @@ import unittest
 import tempfile
 from unittest import mock
 from datetime import datetime
-from ml_utils.io import Pack
-from ml_utils.io.context_dependencies.module_version import ModuleVersionContextDependency
-from ml_utils.io.exc import SlotKeyError, MLIOPackSlotWrongChecksum, MLIODependenciesNotSatisfied
-from ml_utils.io.pack import PackManifest
+from mlio.io import Pack
+from mlio.io.context_dependencies.module_version import ModuleVersionContextDependency
+from mlio.io.exc import SlotKeyError, MLIOPackSlotWrongChecksum, MLIODependenciesNotSatisfied
+from mlio.io.pack import PackManifest
 
 from tests.io.generic import ObjectFixturesMixIn
 
@@ -29,7 +29,7 @@ class PackTestCase(ObjectFixturesMixIn, unittest.TestCase):
                 self.assertDictEqual(pck.slots_info, {})
                 self.assertIsInstance(pck.manifest_info, PackManifest)
 
-    @mock.patch('ml_utils.io.pack.datetime')
+    @mock.patch('mlio.io.pack.datetime')
     def test_func_info(self, mocked_datetime):
         creation_time = datetime(2017, 1, 1, 2, 2, 2)
         updated_time = datetime(2018, 1, 1, 2, 2, 2)
@@ -170,7 +170,7 @@ class PackTestCase(ObjectFixturesMixIn, unittest.TestCase):
                 dep = ModuleVersionContextDependency('moduleone', '==1.1.0')
                 pck.slots_info['slot1'].dependencies[dep.dependency_id()] = dep
 
-                with mock.patch('ml_utils.io.context_dependencies.module_version.get_installed_module_version') \
+                with mock.patch('mlio.io.context_dependencies.module_version.get_installed_module_version') \
                         as mocked_get_installed_module:
                     # Mock that dep is not satisfied
                     mocked_get_installed_module.side_effect = lambda m: {'moduleone': '2.1.0'}[m]

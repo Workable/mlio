@@ -11,7 +11,7 @@ from xgboost import XGBClassifier
 from gensim.models import Word2Vec
 import numpy as np
 
-from ml_utils.io.serializers.gensim import GensimWord2VecModelsSerializer
+from mlio.io.serializers.gensim import GensimWord2VecModelsSerializer
 from tests.io.generic import GenericObject
 from tests.io.serializers.data import RING_VERSE
 
@@ -42,7 +42,7 @@ class GensimWord2VecTestCase(unittest.TestCase):
         self.assertFalse(GensimWord2VecModelsSerializer.can_serialize(int))
         self.assertFalse(GensimWord2VecModelsSerializer.can_serialize("alala"))
 
-    @mock.patch('ml_utils.io.serializers.base.get_installed_module_version')
+    @mock.patch('mlio.io.serializers.base.get_installed_module_version')
     def test_dump_load_file(self, mocked_get_installed_module_version):
         mocked_get_installed_module_version.return_value = packaging.version.parse('0.14.1')
 
@@ -58,7 +58,7 @@ class GensimWord2VecTestCase(unittest.TestCase):
         self.assertEqual(ser.get_context_dependencies()[0].dependency_id(), "module-version:gensim-~=0.14.1")
 
     def test_dump_load_file_integrated(self):
-        from ml_utils.io.compat import load, dump
+        from mlio.io.compat import load, dump
 
         ser = GensimWord2VecModelsSerializer()
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -70,7 +70,7 @@ class GensimWord2VecTestCase(unittest.TestCase):
 
         self.assertTrue((self.wv_model.wv['one'] == recovered_wv_model.wv['one']).all())
 
-    @mock.patch('ml_utils.io.serializers.base.get_installed_module_version')
+    @mock.patch('mlio.io.serializers.base.get_installed_module_version')
     def test_dump_load_string(self, mocked_get_installed_module_version):
         mocked_get_installed_module_version.return_value = packaging.version.parse('0.14.1')
         ser = GensimWord2VecModelsSerializer()

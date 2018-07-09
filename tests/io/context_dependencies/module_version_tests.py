@@ -3,7 +3,7 @@ import packaging.version
 import packaging.specifiers
 from unittest import mock
 
-from ml_utils.io.context_dependencies.module_version import (
+from mlio.io.context_dependencies.module_version import (
     ModuleVersionContextDependency, get_installed_module_version)
 
 
@@ -52,7 +52,7 @@ class ModuleVersionTestCase(unittest.TestCase):
         with self.assertRaises(packaging.specifiers.InvalidSpecifier):
             ModuleVersionContextDependency("a module", "wrong")
 
-    @mock. patch("ml_utils.io.context_dependencies.module_version.get_installed_module_version")
+    @mock. patch("mlio.io.context_dependencies.module_version.get_installed_module_version")
     def test_is_satisfied_empty_version_spec(self, mocked_f):
 
         # Empty context
@@ -67,7 +67,7 @@ class ModuleVersionTestCase(unittest.TestCase):
         mocked_f.return_value = packaging.version.Version('2.1.0')
         self.assertTrue(ctx_dep.is_satisfied())
 
-    @mock.patch("ml_utils.io.context_dependencies.module_version.get_installed_module_version")
+    @mock.patch("mlio.io.context_dependencies.module_version.get_installed_module_version")
     def test_is_satisfied_simple(self, mocked_f):
         # Empty context
         ctx_dep = ModuleVersionContextDependency("the module", "~=2.2.1")
@@ -87,7 +87,7 @@ class ModuleVersionTestCase(unittest.TestCase):
         mocked_f.return_value = packaging.version.Version('3.2.2')
         self.assertFalse(ctx_dep.is_satisfied())
 
-    @mock.patch("ml_utils.io.context_dependencies.module_version.get_installed_module_version")
+    @mock.patch("mlio.io.context_dependencies.module_version.get_installed_module_version")
     def test_is_satisfied_complex(self, mocked_f):
         # Empty context
         ctx_dep = ModuleVersionContextDependency("the module", ">=2.2,<4")

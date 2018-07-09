@@ -22,7 +22,7 @@ def find_suitable_serializer(obj):
     Find serializer that is suitable for this operation
     :param T obj: The object that needs to be serialized
     :return: The first suitable serializer for this type of object
-    :rtype: ml_utils.io.serializers.implementations.SerializerBase
+    :rtype: mlio.io.serializers.implementations.SerializerBase
     """
 
     for serializer in __serializers_registry.values():
@@ -37,7 +37,7 @@ def get_serializer_by_type(serializer_type):
     Find a serialized based on its type
     :rtype: str serializer_type: The unique type of the serializer as it was provided by Serializer.serializer_type()
     :return: The serializer
-    :rtype: ml_utils.io.serializers.implementations.SerializerBase
+    :rtype: mlio.io.serializers.implementations.SerializerBase
     """
     if serializer_type in __serializers_registry:
         return __serializers_registry[serializer_type]
@@ -48,7 +48,7 @@ def get_serializer_by_type(serializer_type):
 def register_serializer(serializer):
     """
     Register a serializer in registry
-    :param ml_utils.io.serializers.SerializerBase serializer:
+    :param mlio.io.serializers.SerializerBase serializer:
     :return: The serializer itself, so that it can be used as class decorator function
     """
 

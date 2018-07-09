@@ -51,7 +51,7 @@ of the application will resolve and lazily load the resource object by only refe
 ### Example 1: Declare a manager and resolve its resources
 
 ```python
-from ml_utils.resources import ResourceManager, repositories, resource_types
+from mlio.resources import ResourceManager, repositories, resource_types
 
 manager = ResourceManager()
 
@@ -80,7 +80,7 @@ In some OS, like Linux, the memory will not even be copied but referenced until 
 an efficient way to load the same resources in multiple processes.
 
 ```python
-from ml_utils.resources import ResourceManager
+from mlio.resources import ResourceManager
 
 manager = ResourceManager()
 
@@ -141,7 +141,7 @@ that is used to open a file-like object in the repository without needed to prov
 For example if we wanted to create the simple `Text` resource type.
 
 ```python
-from ml_utils.resources.resource_types import ResourceBase
+from mlio.resources.resource_types import ResourceBase
 
 class TextResource(ResourceBase):
 
@@ -162,7 +162,7 @@ like path traversal are expected to be implemented in the subclass.
 For example if we wanted to create a draft `Zip` repository.
 
 ```python
-from ml_utils.resources.repositories import RepositoryBase
+from mlio.resources.repositories import RepositoryBase
 from zipfile import ZipFile
 
 

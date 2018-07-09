@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 import numpy as np
 
-from ml_utils.io.serializers.generic import (DefaultSerializer, GenericMLModelsSerializer)
+from mlio.io.serializers.generic import (DefaultSerializer, GenericMLModelsSerializer)
 from tests.io.generic import GenericObject
 
 
@@ -85,7 +85,7 @@ class GeneralMLTestCase(unittest.TestCase):
         self.assertFalse(GenericMLModelsSerializer.can_serialize(int))
         self.assertFalse(GenericMLModelsSerializer.can_serialize("alala"))
 
-    @mock.patch('ml_utils.io.serializers.base.get_installed_module_version')
+    @mock.patch('mlio.io.serializers.base.get_installed_module_version')
     def test_dump_load_file(self, mocked_get_installed_module_version):
         mocked_get_installed_module_version.return_value = packaging.version.parse('0.12.1')
 
@@ -99,7 +99,7 @@ class GeneralMLTestCase(unittest.TestCase):
         self.assertEqual(len(ser.get_context_dependencies()), 1)
         self.assertEqual(ser.get_context_dependencies()[0].dependency_id(), "module-version:numpy-~=0.12.1")
 
-    @mock.patch('ml_utils.io.serializers.base.get_installed_module_version')
+    @mock.patch('mlio.io.serializers.base.get_installed_module_version')
     def test_dump_load_string(self, mocked_get_installed_module_version):
         mocked_get_installed_module_version.return_value = packaging.version.parse('0.12.1')
         ser = GenericMLModelsSerializer()

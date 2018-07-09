@@ -1,5 +1,5 @@
 import logging as _logging
-from ml_utils.resources.exceptions import ResourceNotFoundError
+from mlio.resources.exceptions import ResourceNotFoundError
 from .repositories import RepositoriesContainer
 
 
@@ -17,7 +17,7 @@ class ResourceManager:
         Instantiate a new resource manager
         """
 
-        self._resources = {}  # type: dict[str, ml_utils.resources.resource_types.ResourceBase]
+        self._resources = {}  # type: dict[str, mlio.resources.resource_types.ResourceBase]
 
         self._repositories = RepositoriesContainer()
 
@@ -28,7 +28,7 @@ class ResourceManager:
 
     @property
     def resources(self):
-        """ :rtype: dict[str, ml_utils.resources.resource_types.ResourceBase]"""
+        """ :rtype: dict[str, mlio.resources.resource_types.ResourceBase]"""
         return self._resources
 
     def has_resource(self, resource_id):
@@ -45,7 +45,7 @@ class ResourceManager:
         """
         Add a new resource in the manager. The id of the resource must be unique in this manager and the resource
         object must not be registered in any other manager.
-        :param ml_utils.resources.resource_types.ResourceBase resource: The resource object to be added.
+        :param mlio.resources.resource_types.ResourceBase resource: The resource object to be added.
         """
         if self.has_resource(resource.id):
             logger.warning("There is already a resource with this resource repository_id: {}".format(resource.id))
@@ -56,7 +56,7 @@ class ResourceManager:
         logger.info("Resource '{}' has been added to the resource manager {}".format(resource.id, self))
 
     def __getitem__(self, resource_id):
-        """:rtype: ml_utils.resources.resource_types.ResourceBase"""
+        """:rtype: mlio.resources.resource_types.ResourceBase"""
         if resource_id not in self._resources:
             raise ResourceNotFoundError("Cannot find resource '{}' in resource manager".format(resource_id))
         return self._resources[resource_id].object

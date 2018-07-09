@@ -4,11 +4,11 @@ from functools import partial
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from ml_utils import io as mlio
+from mlio import io as mlio
 
-from ml_utils.resources.exceptions import UnboundResourceError, AlreadyBoundResourceError, \
+from mlio.resources.exceptions import UnboundResourceError, AlreadyBoundResourceError, \
     ResourceNotFoundError, ResourceNotLoadedError
-from ml_utils.resources.resource_types import (
+from mlio.resources.resource_types import (
     DictionaryResource, VocabularyResource, MLIOResource, ResourceBase)
 
 

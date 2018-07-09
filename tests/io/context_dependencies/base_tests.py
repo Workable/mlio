@@ -1,6 +1,6 @@
 import unittest
 
-from ml_utils.io.context_dependencies.base import ContextDependencyBase
+from mlio.io.context_dependencies.base import ContextDependencyBase
 
 
 class ExampleCtxDep(ContextDependencyBase):
