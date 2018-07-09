@@ -5,10 +5,16 @@ serialization framework as well as that of resource discovery and loading for lo
 ## Installation
 
 MLIO is written on _Python >=3.6_ and can be installed using `pip` either from public 
-[PyPI](https://test.pypi.org/project/pypi/) index or from git repository:
+[PyPI](https://test.pypi.org/project/pypi/) index:
 
 ```sh
 pip install mlio
+```
+
+or from git repository:
+
+```bash
+pip install git+ssh://github.com/Workable/mlio.git
 ```
 
 ## Usage
