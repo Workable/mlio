@@ -4,7 +4,7 @@ import tempfile
 from mlio.io import load, dump, Pack
 from mlio.io.exc import SlotKeyError
 
-from tests.io.generic import ObjectFixturesMixIn
+from tests.io_tests.generic import ObjectFixturesMixIn
 
 
 class CompatibilityApiTestCase(ObjectFixturesMixIn, unittest.TestCase):

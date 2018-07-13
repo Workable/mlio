@@ -8,7 +8,7 @@ from mlio.io.context_dependencies.module_version import ModuleVersionContextDepe
 from mlio.io.exc import SlotKeyError, MLIOPackSlotWrongChecksum, MLIODependenciesNotSatisfied
 from mlio.io.pack import PackManifest
 
-from tests.io.generic import ObjectFixturesMixIn
+from tests.io_tests.generic import ObjectFixturesMixIn
 
 
 class PackTestCase(ObjectFixturesMixIn, unittest.TestCase):
@@ -60,14 +60,14 @@ class PackTestCase(ObjectFixturesMixIn, unittest.TestCase):
                 pck.dump('slot1-2', self.obj1k)
 
                 self.assertListEqual(sorted(pck._existing_pack_objects()),
-                                     ['25189f37eb6bc70786defce3ef1d200806687e083206dfad3edd641e8cd407d7.slot'])
+                                     [f'{self.obj1k_hash}.slot'])
 
                 # With three items of 2 different objects
                 pck.dump('slot2', self.obj2k)
 
                 self.assertListEqual(sorted(pck._existing_pack_objects()),
-                                     ['097e551bf9015606337c642a65e284006fc84f672654d24bf5d9cb31594ae2b2.slot',
-                                      '25189f37eb6bc70786defce3ef1d200806687e083206dfad3edd641e8cd407d7.slot'])
+                                     [f'{self.obj1k_hash}.slot',
+                                      f'{self.obj2k_hash}.slot'])
 
     def test_remove_dangling_slot_objects(self):
 
@@ -86,16 +86,16 @@ class PackTestCase(ObjectFixturesMixIn, unittest.TestCase):
                 removed = list(pck._cleanup_dangling_pack_objects())
                 self.assertListEqual(removed, [])
                 self.assertListEqual(sorted(pck._existing_pack_objects()),
-                                     ['097e551bf9015606337c642a65e284006fc84f672654d24bf5d9cb31594ae2b2.slot',
-                                      '25189f37eb6bc70786defce3ef1d200806687e083206dfad3edd641e8cd407d7.slot'])
+                                     [f'{self.obj1k_hash}.slot',
+                                      f'{self.obj2k_hash}.slot'])
 
                 pck.remove('slot2')
 
                 # Check that we cannot read object data
-                dat = pck._zip_fh.read('097e551bf9015606337c642a65e284006fc84f672654d24bf5d9cb31594ae2b2.slot')
+                dat = pck._zip_fh.read(f'{self.obj2k_hash}.slot')
                 self.assertEqual(len(dat), 0)
                 self.assertListEqual(list(pck._existing_pack_objects()),
-                                     ['25189f37eb6bc70786defce3ef1d200806687e083206dfad3edd641e8cd407d7.slot'])
+                                     [f'{self.obj1k_hash}.slot'])
 
     def test_dump_on_existing(self):
 
