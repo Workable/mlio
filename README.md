@@ -1,4 +1,7 @@
 # ML I/O 
+
+[![CircleCI](https://img.shields.io/circleci/project/github/Workable/mlio.svg)](https://circleci.com/gh/Workable/mlio)
+
 MLIO is a toolkit for easy I/O operations on machine learning projects. It tries to solve the problem of unified
 serialization framework as well as that of resource discovery and loading for local or remote storages.
 
