@@ -1,3 +1,12 @@
+"""
+ML I/O
+====================
+
+**MLIO** is a toolkit for easy I/O operations on machine learning projects. It tries to solve the problem of
+unified serialization framework as well as that of resource discovery and loading for local or remote storages.
+
+MLIO is written on _Python >=3.6_
+"""
 import re
 import ast
 from setuptools import setup
@@ -21,6 +30,7 @@ test_requirements = [
 setup(name='mlio',
       version=version,
       description='I/O for machine learning',
+      long_description=__doc__,
       author='Konstantinos Paliouras',
       author_email='paliouras@workable.com',
       install_requires=requirements,
@@ -40,4 +50,10 @@ setup(name='mlio',
           'mlio.io.serializers',
           'mlio.resources',
       ],
+      classifiers=[
+          'License :: OSI Approved :: MIT License',
+          'Operating System :: OS Independent', 'Programming Language :: Python',
+          'Programming Language :: Python :: 3',
+          'Topic :: Software Development :: Libraries :: Python Modules'
+      ]
       )
