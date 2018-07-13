@@ -154,8 +154,8 @@ jobs:
           # Try to install the same version from PyPI
           command: |
             . venv/bin/activate
-            pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple flask-log-request-id==`cat workspace/version.txt`
-            pip freeze | grep -i flask-log-request-id
+            pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple mlio==`cat workspace/version.txt`
+            pip freeze | grep -i mlio
 
   install_from_pypi:
     # Try to install from public pypi
@@ -177,8 +177,8 @@ jobs:
           # Try to install the same version from PyPI
           command: |
             . venv/bin/activate
-            pip install flask-log-request-id==`cat workspace/version.txt`
-            pip freeze | grep -i flask-log-request-id
+            pip install mlio==`cat workspace/version.txt`
+            pip freeze | grep -i mlio
 
 workflows:
   version: 2
