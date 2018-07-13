@@ -28,3 +28,7 @@ typical ML project usually both layers are needed.
 ## License
 
 See the [LICENSE](LICENSE.md) file for license rights and limitations (MIT).
+
+## Authors
+
+`MLIO` was built at [Workable](https://www.workable.com/), mainly by [Konstantinos Paliouras](http://github.com/sque), who is also the chief maintainer.
