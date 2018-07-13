@@ -8,7 +8,7 @@ from mlio.io.context_dependencies.module_version import ModuleVersionContextDepe
 from mlio.io.exc import SlotKeyError, MLIOPackSlotWrongChecksum, MLIODependenciesNotSatisfied
 from mlio.io.pack import PackManifest
 
-from tests.io.generic import ObjectFixturesMixIn
+from tests.io_tests.generic import ObjectFixturesMixIn
 
 
 class PackTestCase(ObjectFixturesMixIn, unittest.TestCase):

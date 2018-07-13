@@ -13,8 +13,8 @@ from mlio.io.serializers.generic import DefaultSerializer, GenericMLModelsSerial
 from mlio.io.serializers.gensim import GensimWord2VecModelsSerializer
 
 
-from tests.io.generic import GenericObject
-from tests.io.serializers.data import RING_VERSE
+from tests.io_tests.generic import GenericObject
+from tests.io_tests.serializers.data import RING_VERSE
 
 
 class IntSerializer(SerializerBase):

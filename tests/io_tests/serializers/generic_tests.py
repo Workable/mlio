@@ -10,7 +10,7 @@ from xgboost import XGBClassifier
 import numpy as np
 
 from mlio.io.serializers.generic import (DefaultSerializer, GenericMLModelsSerializer)
-from tests.io.generic import GenericObject
+from tests.io_tests.generic import GenericObject
 
 
 class DefaultSerializerTestCase(unittest.TestCase):
